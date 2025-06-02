@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Pikachu",
+    "type": "Electric",
+    "health": 120,
+    "attack": 130,
+    "defense": 75,
+    "moves": ["Thunderbolt", "Quick Attack", "Tackle", "Electro Ball"]
+  },
+  {
+    "name": "Charizard",
+    "type": "Fire",
+    "health": 120,
+    "attack": 100,
+    "defense": 80,
+    "moves": ["Flamethrower", "Scratch", "Tackle", "Heat Wave"]
+  },
+  {
+    "name": "Greninja",
+    "type": "Water",
+    "health": 110,
+    "attack": 105,
+    "defense": 70,
+    "moves": ["Water Shuriken", "Mega Water Shuriken", "Hydro Pump", "Quick Attack"]
+  }
+]
