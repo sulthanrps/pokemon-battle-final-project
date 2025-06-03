@@ -5,11 +5,14 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.geom.Area;
-import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.io.IOException;
 import java.net.URL;
 import javax.imageio.ImageIO;
+import javax.swing.plaf.basic.BasicProgressBarUI;
+import java.awt.Graphics; // Pastikan import ini ada
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 public class PokemonBattleUI extends JFrame {
 
@@ -18,27 +21,19 @@ public class PokemonBattleUI extends JFrame {
     private static final Color HP_BAR_COLOR_GREEN = new Color(0, 200, 0); // Hijau terang
     private static final Color HP_BAR_COLOR_YELLOW = new Color(255, 215, 0); // Kuning emas
     private static final Color HP_BAR_COLOR_RED = new Color(255, 69, 0);   // Merah oranye
-    private static final Font TITLE_FONT = new Font("Verdana", Font.BOLD, 28); // Font lebih besar dan tebal
-    private static final Font LABEL_FONT = new Font("Verdana", Font.BOLD, 14);
-    private static final Font BUTTON_FONT = new Font("Verdana", Font.BOLD, 12); // Font lebih kecil untuk tombol
-    private static final Color CHARACTER_NAME_BG = new Color(46, 204, 113, 200); // Hijau semi-transparan untuk label nama
-    private static final Color BUTTON_BG_COLOR = new Color(120, 220, 90); // Warna hijau muda untuk tombol
-    private static final Color BUTTON_TEXT_COLOR = Color.DARK_GRAY;
+    private static final Color BUTTON_BG_COLOR = new Color(66, 153, 45); // Warna hijau muda untuk tombol
 
     // Komponen UI
     private JLabel playerHealthTextLabel; // Untuk teks "HP: 70%"
     private JProgressBar playerHealthBar;
     private JLabel enemyHealthTextLabel; // Untuk teks "HP: 70%"
     private JProgressBar enemyHealthBar;
-    private JLabel playerSpriteLabel;
-    private JLabel enemySpriteLabel;
     private JLabel gameStatusLabel;
+    private JLabel gameStatusLabelBottom;
 
-    private int playerCurrentHP = 70;
-    private int enemyCurrentHP = 70;
+    private int playerCurrentHP = 100;
+    private int enemyCurrentHP = 100;
     private final int MAX_HP = 100;
-
-    private Image backgroundImage; // Untuk gambar latar belakang
 
     // Panel Latar Belakang Kustom
     class BackgroundPanel extends JPanel {
@@ -76,7 +71,7 @@ public class PokemonBattleUI extends JFrame {
     }
 
     public PokemonBattleUI() {
-        setTitle("Pertarungan Pokemon - Mirip Gambar");
+        setTitle("Pertarungan Pokemon");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(900, 700); // Ukuran frame disesuaikan agar lebih lega
         setLocationRelativeTo(null);
@@ -94,15 +89,23 @@ public class PokemonBattleUI extends JFrame {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // --- Teks "SERANG DAN KALAHKAN" (Kiri Atas) ---
-        gameStatusLabel = new JLabel("SERANG " +
-                "DAN KALAHKAN");
-        gameStatusLabel.setFont(TITLE_FONT);
+        gameStatusLabel = new JLabel("ATTACK");
+        gameStatusLabel.setFont(FontManager.TITLE_FONT);
         gameStatusLabel.setForeground(Color.WHITE);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.insets = new Insets(10, 10, 0, 0); // Padding atas dan kiri
         mainPanel.add(gameStatusLabel, gbc);
+
+        gameStatusLabelBottom = new JLabel("AND CONQUER THE BATTLE");
+        gameStatusLabelBottom.setFont(FontManager.TITLE_FONT);
+        gameStatusLabelBottom.setForeground(Color.WHITE);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(40, 10, 0, 0); // Padding atas dan kiri
+        mainPanel.add(gameStatusLabelBottom, gbc);
 
         // --- Panel Musuh (Kanan Atas) ---
         JPanel enemyPanel = createCharacterPanel("MUSUH", true);
@@ -149,104 +152,151 @@ public class PokemonBattleUI extends JFrame {
     }
 
     private JPanel createCharacterPanel(String characterName, boolean isEnemy) {
-        JPanel panel = new JPanel();
-        panel.setOpaque(true); // Panel karakter transparan
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); // Susun vertikal: HP, Sprite, Nama
+        System.out.println("Creating Character Panel for: " + characterName); // Debugging tambahan
 
-        // Panel untuk HP (Teks HP dan Bar HP) - disusun horizontal
-        JPanel hpDisplayPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        hpDisplayPanel.setBackground(new Color(50, 50, 50, 200));
+        // Panel utama untuk karakter ini, buat transparan agar lebih mudah melihat efeknya
+        JPanel panel = new JPanel(); // Gunakan FlowLayout sederhana untuk tes
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(true); // Biarkan transparan terhadap background utama game
 
-        JLabel hpText = new JLabel("HP: " + (isEnemy ? enemyCurrentHP : playerCurrentHP) + "%");
-        hpText.setFont(LABEL_FONT);
-        hpText.setForeground(Color.WHITE);
+        // Label HP sederhana untuk konteks
+        JLabel hpTextLabel = new JLabel("HP (" + characterName + "):");
 
+        // JProgressBar yang akan kita tes
         JProgressBar healthBar = new JProgressBar(0, MAX_HP);
-        healthBar.setValue(MAX_HP);
-        healthBar.setStringPainted(false); // Tidak menampilkan string di bar itu sendiri
-        healthBar.setPreferredSize(new Dimension(120, 20)); // Ukuran HP bar
-        healthBar.setBackground(HP_BAR_BACKGROUND); // Warna latar belakang bar
-        healthBar.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+        healthBar.setUI(new BasicProgressBarUI()); // PASTIKAN INI BENAR-BENAR DITERAPKAN
+        healthBar.setPreferredSize(new Dimension(150, 25)); // Beri ukuran yang cukup
+        healthBar.setBackground(HP_BAR_BACKGROUND); // Warna trek (bagian kosong)
+        healthBar.setOpaque(true); // Penting agar background dan foreground tergambar
 
-        healthBar.setOpaque(true);
-
-        hpDisplayPanel.add(hpText);
+        JPanel hpDisplayPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        hpDisplayPanel.setOpaque(false);
+        hpDisplayPanel.add(hpTextLabel);
         hpDisplayPanel.add(healthBar);
 
-        // Sprite (Gambar Karakter)
-        JLabel spriteLabel = new JLabel();
-        // Ganti dengan path ke gambar sprite Anda di folder resources
-        String spritePath = isEnemy ? "Assets/Pokemons/bulbasaur.png" : "Assets/Pokemons/pikachu.png";
+        hpDisplayPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        hpDisplayPanel.setOpaque(false); // Perlu true jika ingin setBackground terlihat solid
+        hpDisplayPanel.setBackground(new Color(50, 50, 50, 200)); // Warna semi-transparan Anda
+        panel.add(hpDisplayPanel);
+        // HAPUS SEMENTARA border kustom untuk melihat apakah ini berpengaruh
+        // healthBar.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+
+        // Set nilai awal berdasarkan HP saat ini
+        int currentCharacterHP = isEnemy ? enemyCurrentHP : playerCurrentHP;
+        healthBar.setValue(currentCharacterHP);
+        System.out.println("Initial HP for " + characterName + ": " + currentCharacterHP);
+
+        // Assign ke field instance agar updateHealthBars bisa bekerja
+        if (isEnemy) {
+            enemyHealthBar = healthBar;
+            enemyHealthTextLabel = hpTextLabel; // Update referensi ini juga
+        } else {
+            playerHealthBar = healthBar;
+            playerHealthTextLabel = hpTextLabel; // Update referensi ini juga
+        }
+
+        // Panggil setHealthBarColor SEGERA untuk mengatur warna awal saat pembuatan panel
+        // Ini PENTING untuk tes render awal. updateHealthBars() akan dipanggil lagi nanti.
+        System.out.println("Applying initial color for " + characterName + " in createCharacterPanel");
+        setHealthBarColor(healthBar, currentCharacterHP);
+
+        panel.add(hpTextLabel);
+        panel.add(healthBar);
+
+        JLayeredPane spriteContainerPane = new JLayeredPane();
+
+        final int LILYPAD_WIDTH = 150;
+        final int LILYPAD_HEIGHT = 60;
+        final int POKEMON_WIDTH = 120;
+        final int POKEMON_HEIGHT = 120;
+
+        spriteContainerPane.setPreferredSize(new Dimension(LILYPAD_WIDTH, LILYPAD_HEIGHT + POKEMON_HEIGHT / 2));
+
+        JLabel lilypadLabel = new JLabel();
+        try {
+            URL lilypadUrl = getClass().getResource("/Assets/terataiPlayer.png");
+            if (lilypadUrl != null) {
+                ImageIcon lilypadIcon = new ImageIcon(ImageIO.read(lilypadUrl));
+                Image lilypadImg = lilypadIcon.getImage().getScaledInstance(LILYPAD_WIDTH, LILYPAD_HEIGHT, Image.SCALE_SMOOTH);
+                lilypadLabel.setIcon(new ImageIcon(lilypadImg));
+            } else {
+                lilypadLabel.setText("[IMG TERATAI]");
+                System.err.println("Resource gambar teratai tidak ditemukan.");
+            }
+        } catch (IOException e) {
+            lilypadLabel.setText("[GAGAL LOAD TERATAI]");
+            e.printStackTrace();
+        }
+        lilypadLabel.setBounds(0, POKEMON_HEIGHT / 2 + 35, LILYPAD_WIDTH, LILYPAD_HEIGHT - 35);
+
+        JLabel pokemonSpriteLabel = new JLabel();
+        String spritePath = isEnemy ? "/Assets/Pokemons/charizard.png" : "/Assets/Pokemons/pikachu.png";
         try {
             URL imageUrl = getClass().getResource(spritePath);
             if (imageUrl != null) {
                 ImageIcon icon = new ImageIcon(ImageIO.read(imageUrl));
-                // Resize gambar jika perlu (contoh: 100x100)
-                Image img = icon.getImage().getScaledInstance(120, 120, Image.SCALE_SMOOTH);
-                spriteLabel.setIcon(new ImageIcon(img));
+                Image img = icon.getImage().getScaledInstance(POKEMON_WIDTH, POKEMON_WIDTH, Image.SCALE_SMOOTH);
+                pokemonSpriteLabel.setIcon(new ImageIcon(img));
             } else {
-                spriteLabel.setText(isEnemy ? "[IMG MUSUH]" : "[IMG KAMU]");
-                spriteLabel.setPreferredSize(new Dimension(120, 120));
+                pokemonSpriteLabel.setText(isEnemy ? "[IMG MUSUH]" : "[IMG KAMU]");
+                System.err.println("Resource gambar sprite tidak ditemukan: " + spritePath);
             }
         } catch (IOException e) {
-            spriteLabel.setText(isEnemy ? "[GAGAL LOAD MUSUH]" : "[GAGAL LOAD KAMU]");
-            spriteLabel.setPreferredSize(new Dimension(120, 120));
+            pokemonSpriteLabel.setText(isEnemy ? "[GAGAL LOAD MUSUH]" : "[GAGAL LOAD KAMU]");
             e.printStackTrace();
         }
-        spriteLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        spriteLabel.setBorder(new EmptyBorder(10,0,10,0)); // Padding atas-bawah sprite
+        pokemonSpriteLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-        // Label Nama Karakter (KAMU/MUSUH) dengan latar belakang khusus
-        JLabel nameLabel = new JLabel(characterName, SwingConstants.CENTER);
-        nameLabel.setFont(LABEL_FONT);
-        nameLabel.setForeground(Color.WHITE);
-        nameLabel.setOpaque(true);
-        nameLabel.setBackground(CHARACTER_NAME_BG);
-        nameLabel.setBorder(new RoundedBorder(15, CHARACTER_NAME_BG, 2, Color.DARK_GRAY)); // Border rounded
-        nameLabel.setPreferredSize(new Dimension(150, 40)); // Ukuran tetap untuk konsistensi
+        int pikachuX = (LILYPAD_WIDTH - POKEMON_WIDTH) / 2;
+        int pikachuY = 0;
+        pokemonSpriteLabel.setBounds(pikachuX, pikachuY, POKEMON_WIDTH, POKEMON_HEIGHT);
 
+        spriteContainerPane.add(lilypadLabel, Integer.valueOf(0));
+        spriteContainerPane.add(pokemonSpriteLabel, Integer.valueOf(1));
 
-        if (isEnemy) {
-            enemyHealthTextLabel = hpText;
-            enemyHealthBar = healthBar;
-            enemySpriteLabel = spriteLabel;
-            // Susunan untuk Musuh: HP, Sprite, Nama
-            panel.add(hpDisplayPanel);
-            panel.add(Box.createVerticalStrut(5)); // Spasi kecil
-            panel.add(enemySpriteLabel);
-            panel.add(Box.createVerticalStrut(5));
-            panel.add(nameLabel);
-        } else {
-            playerHealthTextLabel = hpText;
-            playerHealthBar = healthBar;
-            playerSpriteLabel = spriteLabel;
-            // Susunan untuk Pemain: HP, Sprite, Nama
-            panel.add(hpDisplayPanel);
-            panel.add(Box.createVerticalStrut(5));
-            panel.add(playerSpriteLabel);
-            panel.add(Box.createVerticalStrut(5));
-            panel.add(nameLabel);
-        }
-        // Menambahkan alignment agar komponen di tengah panel BoxLayout
-        hpDisplayPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        spriteLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        spriteContainerPane.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(spriteContainerPane);
+        panel.add(Box.createVerticalStrut(5));
 
-
+        System.out.println("Finished Creating Character Panel for: " + characterName + " with bar value: " + healthBar.getValue());
         return panel;
     }
 
     private JButton createActionButton(String actionName) {
-        JButton button = new JButton(actionName);
-        button.setFont(BUTTON_FONT);
+        final int cornerRadius = 20;
+
+        JButton button = new JButton(actionName) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                if (getModel().isArmed()) {
+                    g2.setColor(getBackground().darker());
+                } else {
+                    g2.setColor(getBackground());
+                }
+
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
+
+                g2.dispose();
+
+                super.paintComponent(g);
+            }
+        };
+
+        button.setFont(FontManager.BUTTON_FONT);
         button.setBackground(BUTTON_BG_COLOR);
-        button.setForeground(BUTTON_TEXT_COLOR);
+        button.setForeground(Color.WHITE);
+
         button.setFocusPainted(false);
-        // Menggunakan custom border untuk tampilan rounded
-        button.setBorder(new RoundedBorder(20, BUTTON_BG_COLOR, 2, Color.DARK_GRAY)); // radius, bgColor, thickness, borderColor
-        button.setOpaque(true); // Penting agar background terlihat dengan custom border
-        button.setContentAreaFilled(false); // Agar custom painting border bekerja baik
-        button.setPreferredSize(new Dimension(150, 50)); // Ukuran tombol
+        button.setBorder(new RoundedBorder(cornerRadius, null, 1, Color.DARK_GRAY));
+
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+
+        button.setPreferredSize(new Dimension(150, 50));
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         button.addActionListener(new ActionListener() {
@@ -272,11 +322,13 @@ public class PokemonBattleUI extends JFrame {
     private void updateHealthBars() {
         if (playerHealthBar != null && playerHealthTextLabel != null) {
             playerHealthBar.setValue(playerCurrentHP);
+            playerHealthTextLabel.setFont(FontManager.NORMAL_FONT);
             playerHealthTextLabel.setText("HP: " + (playerCurrentHP * 100 / MAX_HP) + "%");
             setHealthBarColor(playerHealthBar, playerCurrentHP);
         }
         if (enemyHealthBar != null && enemyHealthTextLabel != null) {
             enemyHealthBar.setValue(enemyCurrentHP);
+            enemyHealthTextLabel.setFont(FontManager.NORMAL_FONT);
             enemyHealthTextLabel.setText("HP: " + (enemyCurrentHP * 100 / MAX_HP) + "%");
             setHealthBarColor(enemyHealthBar, enemyCurrentHP);
         }
@@ -295,6 +347,8 @@ public class PokemonBattleUI extends JFrame {
             healthBar.setForeground(HP_BAR_COLOR_RED);
             System.out.println("  -> Set to RED");
         }
+
+        healthBar.repaint();
     }
 
     private void checkGameEnd() {
@@ -339,6 +393,7 @@ public class PokemonBattleUI extends JFrame {
             }
 
             gameStatusLabel.setText(message.toUpperCase());
+            gameStatusLabelBottom.setText("");
             JOptionPane.showMessageDialog(this, message, "Permainan Selesai", JOptionPane.INFORMATION_MESSAGE);
         }
     }
@@ -364,18 +419,6 @@ public class PokemonBattleUI extends JFrame {
 
             Shape outer = new RoundRectangle2D.Float(x, y, width -1 , height -1 , radius, radius);
             Shape inner = new RoundRectangle2D.Float(x + thickness, y + thickness, width - 1 - thickness * 2, height - 1 - thickness * 2, radius - thickness, radius - thickness);
-
-            // Gambar background (fill)
-            if (c.isOpaque() || backgroundColor != null) { // Hanya gambar background jika komponen opaque atau warna background diset
-                Area area = new Area(outer);
-                if (c instanceof JButton && !((JButton)c).getModel().isArmed()) { // Untuk tombol, agar efek klik tetap terlihat
-                    g2d.setColor(backgroundColor != null ? backgroundColor : c.getBackground());
-                } else if (!(c instanceof JButton)) {
-                    g2d.setColor(backgroundColor != null ? backgroundColor : c.getBackground());
-                }
-                g2d.fill(area);
-            }
-
 
             // Gambar border
             if (thickness > 0 && borderColor != null) {
@@ -406,6 +449,11 @@ public class PokemonBattleUI extends JFrame {
 
 
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         SwingUtilities.invokeLater(() -> {
             PokemonBattleUI game = new PokemonBattleUI();
             game.setVisible(true);
