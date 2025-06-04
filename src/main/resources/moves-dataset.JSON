@@ -40,23 +40,23 @@
     "power": 95
   },
   {
-    "name": "Water Shuriken",
-    "type": "Water",
-    "power": 20
+    "name": "Hyper Beam",
+    "type": "Normal",
+    "power": 150
   },
   {
-    "name": "Mega Water Shuriken",
-    "type": "Water",
-    "power": 120
+    "name": "Judgement",
+    "type": "Normal",
+    "power": 100
   },
   {
-    "name": "Hydro Pump",
-    "type": "Water",
-    "power": 110
+    "name": "Giga Impact",
+    "type": "Normal",
+    "power": 150
   },
   {
-    "name": "Bubble Beam",
-    "type": "Water",
-    "power": 65
+    "name": "Hyper Voice",
+    "type": "Normal",
+    "power": 90
   }
 ]
