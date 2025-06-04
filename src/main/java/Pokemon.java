@@ -8,16 +8,16 @@ public class Pokemon {
     private int maxHealth;
     private int attack;
     private int defense;
-    private List<Move> moves;
+    private ArrayList<Move> moves;
 
-    public Pokemon(String name, Type type, int health, int attack, int defense) {
+    public Pokemon(String name, Type type, int health, int attack, int defense, ArrayList<Move> moves) {
         this.name = name;
         this.type = type;
         this.health = health;
         this.maxHealth = health;
         this.attack = attack;
         this.defense = defense;
-        this.moves = new ArrayList<>();
+        this.moves = moves;
     }
 
     // ***Getters and Setters (Crucial!)***
@@ -72,5 +72,31 @@ public class Pokemon {
 
     public boolean isFainted() {
         return health <= 0;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Pokemon{\n");
+        sb.append("  name='").append(name).append("',\n");
+        sb.append("  type=").append(type).append(",\n"); // Asumsikan Type.toString() sudah baik
+        sb.append("  health=").append(health).append("/").append(maxHealth).append(",\n");
+        sb.append("  attack=").append(attack).append(",\n");
+        sb.append("  defense=").append(defense).append(",\n");
+        sb.append("  moves=[\n");
+        if (moves != null && !moves.isEmpty()) {
+            for (int i = 0; i < moves.size(); i++) {
+                sb.append("    ").append(moves.get(i).toString()); // Asumsikan Move.toString() sudah baik
+                if (i < moves.size() - 1) {
+                    sb.append(",");
+                }
+                sb.append("\n");
+            }
+        } else {
+            sb.append("    (no moves)\n");
+        }
+        sb.append("  ]\n");
+        sb.append("}");
+        return sb.toString();
     }
 }
