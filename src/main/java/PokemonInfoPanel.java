@@ -14,11 +14,11 @@ public class PokemonInfoPanel extends JPanel {
 
     private static final Map<String, String> typeSymbolPaths = new HashMap<>();
     static {
-        typeSymbolPaths.put("Electric", "/Assets/Showcase/electric.jpg");
-        typeSymbolPaths.put("Fire", "/Assets/Showcase/api.jpg");
-        typeSymbolPaths.put("Water", "/Assets/Showcase/air.jpg");
-        typeSymbolPaths.put("Grass", "/Assets/Showcase/daun.jpg");
-        typeSymbolPaths.put("Normal", "/Assets/Showcase/bintang.jpg");
+        typeSymbolPaths.put("electric", "/Assets/Showcase/electric.jpg");
+        typeSymbolPaths.put("fire", "/Assets/Showcase/api.jpg");
+        typeSymbolPaths.put("water", "/Assets/Showcase/air.jpg");
+        typeSymbolPaths.put("grass", "/Assets/Showcase/daun.jpg");
+        typeSymbolPaths.put("normal", "/Assets/Showcase/bintang.jpg");
     }
 
     private static final int NAME_X = 25;
@@ -44,8 +44,9 @@ public class PokemonInfoPanel extends JPanel {
         this.pokemon = pokemon;
         this.cardFrameImage = ImageLoader.loadImage(CARD_FRAME_PATH);
 
-        String symbolPath = typeSymbolPaths.get(pokemon.getType());
+        String symbolPath = typeSymbolPaths.get(pokemon.getType().toString().toLowerCase());
         if (symbolPath != null) {
+            System.out.println("Simbol ditemukan !");
             this.typeSymbolImage = ImageLoader.loadImage(symbolPath);
         } else {
             System.err.println("Simbol untuk tipe " + pokemon.getType() + " tidak ditemukan.");
