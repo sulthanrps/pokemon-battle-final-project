@@ -13,6 +13,7 @@ import javax.swing.plaf.basic.BasicProgressBarUI;
 import java.awt.Graphics; // Pastikan import ini ada
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import util.FontManager;
 
 public class PokemonBattleUI extends JFrame {
 
