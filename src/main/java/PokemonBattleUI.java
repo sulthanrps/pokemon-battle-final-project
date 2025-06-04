@@ -4,7 +4,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Area;
 import java.awt.geom.RoundRectangle2D;
 import java.io.IOException;
 import java.net.URL;
@@ -192,7 +191,7 @@ public class PokemonBattleUI extends JFrame {
         // Ukuran container disesuaikan agar pokemon dan teratai pas
         JLabel pokemonSpriteLabel = new JLabel();
         pokemonSpriteLabel.setOpaque(false);
-        String spritePath = isEnemy ? "/Assets/Pokemons/electivire.gif" : "/Assets/Pokemons/pikachu.gif";
+        String spritePath = isEnemy ? "/Assets/Pokemons/electivire.gif" : "/Assets/Pokemons/pikachu-playable.gif";
         URL imageUrl = getClass().getResource(spritePath);
         ImageIcon pokemonIcon = null;
 

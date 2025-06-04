@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class GetPokemon {
-    public static ArrayList<Pokemon> getPokemonList(){
+    public static ArrayList<Pokemon> all(){
         ArrayList<Pokemon> pokemonList = new ArrayList<>();
         String namaFileJson = "pokemon-dataset.json"; // Nama file di folder resources
 
@@ -76,7 +76,7 @@ public class GetPokemon {
     }
 
     public static void main(String[] args) {
-        ArrayList<Pokemon> allPokemon = getPokemonList();
+        ArrayList<Pokemon> allPokemon = all();
         System.out.println(allPokemon);
     }
 }
