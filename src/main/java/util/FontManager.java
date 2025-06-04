@@ -1,3 +1,5 @@
+package util;
+
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.GraphicsEnvironment;
@@ -80,7 +82,7 @@ public class FontManager {
         // Jika basePixelifyBold berhasil dimuat, gunakan itu untuk style BOLD.
         // Jika tidak, gunakan basePixelifyRegular dan terapkan style Font.BOLD (algorithmic bold).
         Font titleBase = (basePixelifyBold != null) ? basePixelifyBold : basePixelifyRegular;
-        TITLE_FONT = titleBase.deriveFont(Font.BOLD, 42f);
+        TITLE_FONT = titleBase.deriveFont(Font.BOLD, 32f);
 
         NORMAL_FONT = basePixelifyRegular.deriveFont(Font.PLAIN, 18f);
         // Anda bisa memilih apakah label menggunakan versi regular atau bold:
