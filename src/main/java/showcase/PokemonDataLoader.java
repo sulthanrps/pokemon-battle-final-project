@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PokemonDataLoader {
-    private static final String POKEMON_DB_JSON_PATH = "pokemon-dataset.json";
+    private static final String POKEMON_DB_JSON_PATH = "pokemon-dataset.json"; //ini errornya
 
     public static List<PokemonData> loadPokemonData() {
         List<PokemonData> pokemonList = new ArrayList<>();
