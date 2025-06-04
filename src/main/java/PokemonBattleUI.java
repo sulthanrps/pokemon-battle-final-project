@@ -10,7 +10,7 @@ import java.net.URL;
 import javax.imageio.ImageIO;
 import javax.swing.plaf.basic.BasicProgressBarUI;// Pastikan FontManager Anda sudah benar
 
-public class PokemonBattleUI extends JFrame {
+public class PokemonBattleUI extends JPanel {
 
     // Konstanta untuk warna dan font
     private static final Color HP_BAR_BACKGROUND = new Color(220, 220, 220); // Warna abu-abu muda untuk latar belakang HP bar (target)
@@ -21,8 +21,10 @@ public class PokemonBattleUI extends JFrame {
     private static final Color CHARACTER_NAME_BG_PLAYER = new Color(106, 190, 48); // Hijau untuk label "KAMU"
     private static final Color CHARACTER_NAME_BG_ENEMY = new Color(50, 50, 50);    // Hitam/Abu tua untuk label "MUSUH"
     private static final Color CHARACTER_NAME_FG = Color.WHITE;
+    private GameWindow gameWindow;
 
     // Komponen UI
+    private JFrame window;
     private JLabel playerHealthTextLabel;
     private JProgressBar playerHealthBar;
     private JLabel enemyHealthTextLabel;
@@ -61,91 +63,95 @@ public class PokemonBattleUI extends JFrame {
         }
     }
 
-    public PokemonBattleUI() {
-        setTitle("Pertarungan Pokemon");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(700, 600);
-        setLocationRelativeTo(null);
+    public PokemonBattleUI(GameWindow gameWindow) {
+        this.gameWindow = gameWindow;
+        SwingUtilities.invokeLater(() -> {
+            window = new JFrame("Pokemon Battle");
+            window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            window.setSize(700, 600);
+            window.setLocationRelativeTo(null);
+            window.setVisible(true);
 
-        BackgroundPanel backgroundContentPane = new BackgroundPanel("/Assets/backgroundBattle.png"); // Pastikan path ini benar
-        setContentPane(backgroundContentPane);
+            BackgroundPanel backgroundContentPane = new BackgroundPanel("/Assets/backgroundBattle.png"); // Pastikan path ini benar
+            window.setContentPane(backgroundContentPane);
 
-        mainPanel = new JPanel(new GridBagLayout());
-        mainPanel.setOpaque(false);
-        mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15)); // Padding disesuaikan
-        GridBagConstraints gbc = new GridBagConstraints();
+            mainPanel = new JPanel(new GridBagLayout());
+            mainPanel.setOpaque(false);
+            mainPanel.setBorder(new EmptyBorder(15, 15, 15, 15)); // Padding disesuaikan
+            GridBagConstraints gbc = new GridBagConstraints();
 
-        // --- Panel Status Game (Kiri Atas) ---
-        JPanel statusTextPanel = new JPanel();
-        statusTextPanel.setLayout(new BoxLayout(statusTextPanel, BoxLayout.Y_AXIS));
-        statusTextPanel.setOpaque(false);
+            // --- Panel Status Game (Kiri Atas) ---
+            JPanel statusTextPanel = new JPanel();
+            statusTextPanel.setLayout(new BoxLayout(statusTextPanel, BoxLayout.Y_AXIS));
+            statusTextPanel.setOpaque(false);
 
-        JLabel statusLine1 = new JLabel("SERANG");
-        statusLine1.setFont(FontManager.TITLE_FONT); // Gunakan font dari FontManager
-        statusLine1.setForeground(Color.WHITE);
-        statusLine1.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JLabel statusLine1 = new JLabel("SERANG");
+            statusLine1.setFont(FontManager.TITLE_FONT); // Gunakan font dari FontManager
+            statusLine1.setForeground(Color.WHITE);
+            statusLine1.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel statusLine2 = new JLabel("DAN KALAHKAN");
-        statusLine2.setFont(FontManager.TITLE_FONT); // Gunakan font dari FontManager
-        statusLine2.setForeground(Color.WHITE);
-        statusLine2.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JLabel statusLine2 = new JLabel("DAN KALAHKAN");
+            statusLine2.setFont(FontManager.TITLE_FONT); // Gunakan font dari FontManager
+            statusLine2.setForeground(Color.WHITE);
+            statusLine2.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        statusTextPanel.add(statusLine1);
-        statusTextPanel.add(statusLine2);
+            statusTextPanel.add(statusLine1);
+            statusTextPanel.add(statusLine2);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0.5; // Beri bobot agar bisa mendorong panel musuh ke kanan
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        gbc.insets = new Insets(10, 10, 0, 0);
-        mainPanel.add(statusTextPanel, gbc);
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.weightx = 0.5; // Beri bobot agar bisa mendorong panel musuh ke kanan
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+            gbc.insets = new Insets(10, 10, 0, 0);
+            mainPanel.add(statusTextPanel, gbc);
 
-        // --- Panel Musuh (Kanan Atas) ---
-        JPanel enemyPanel = createCharacterPanel("ELECTIVIRE", true);
-        enemyPanel.setOpaque(false);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 0.5; // Beri bobot
-        gbc.weighty = 0.2;
-        gbc.anchor = GridBagConstraints.NORTHEAST;
+            // --- Panel Musuh (Kanan Atas) ---
+            JPanel enemyPanel = createCharacterPanel("ELECTIVIRE", true);
+            enemyPanel.setOpaque(false);
+            gbc.gridx = 1;
+            gbc.gridy = 0;
+            gbc.weightx = 0.5; // Beri bobot
+            gbc.weighty = 0.2;
+            gbc.anchor = GridBagConstraints.NORTHEAST;
 //        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(10, 0, 0, 10);
-        mainPanel.add(enemyPanel, gbc);
+            gbc.insets = new Insets(10, 0, 0, 10);
+            mainPanel.add(enemyPanel, gbc);
 
-        // --- Panel Pemain (Kiri Bawah) ---
-        JPanel playerPanel = createCharacterPanel("SNORLAX", false);
-        playerPanel.setOpaque(false);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.weightx = 0.5;
-        gbc.weighty = 1; // Agar mendorong panel pemain ke bawah
-        gbc.anchor = GridBagConstraints.SOUTHWEST;
+            // --- Panel Pemain (Kiri Bawah) ---
+            JPanel playerPanel = createCharacterPanel("SNORLAX", false);
+            playerPanel.setOpaque(false);
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.weightx = 0.5;
+            gbc.weighty = 1; // Agar mendorong panel pemain ke bawah
+            gbc.anchor = GridBagConstraints.SOUTHWEST;
 //        gbc.fill = GridBagConstraints.BOTH;
-        gbc.insets = new Insets(0, 10, 0, 0); // Padding bawah disesuaikan
-        mainPanel.add(playerPanel, gbc);
+            gbc.insets = new Insets(0, 10, 0, 0); // Padding bawah disesuaikan
+            mainPanel.add(playerPanel, gbc);
 
-        // --- Panel Tombol Aksi (Bawah Tengah) ---
-        JPanel actionPanel = new JPanel(new GridLayout(2, 2, 10, 10)); // Spasi antar tombol disesuaikan
-        actionPanel.setOpaque(false);
-        // actionPanel.setBorder(new EmptyBorder(0, 0, 10, 0)); // Dihapus agar lebih fleksibel dengan anchor SOUTH
+            // --- Panel Tombol Aksi (Bawah Tengah) ---
+            JPanel actionPanel = new JPanel(new GridLayout(2, 2, 10, 10)); // Spasi antar tombol disesuaikan
+            actionPanel.setOpaque(false);
+            // actionPanel.setBorder(new EmptyBorder(0, 0, 10, 0)); // Dihapus agar lebih fleksibel dengan anchor SOUTH
 
-        String[] attackNames = {"THUNDER", "IRON TAIL", "ELECTRO BALL", "QUICK ATTACK"};
-        for (String attackName : attackNames) {
-            JButton attackButton = createActionButton(attackName);
-            actionPanel.add(attackButton);
-        }
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 2; // Melintasi dua kolom
-        gbc.weightx = 0.5; // Agar panel tombol bisa mengisi horizontal jika perlu
-        gbc.weighty = 0;
-        gbc.anchor = GridBagConstraints.SOUTHEAST;
-        gbc.fill = GridBagConstraints.NONE; // Tidak mengisi, hanya seukuran preferensinya
-        gbc.insets = new Insets(0, 0, 10, 0); // Padding atas dan bawah untuk panel tombol
-        mainPanel.add(actionPanel, gbc);
+            String[] attackNames = {"THUNDER", "IRON TAIL", "ELECTRO BALL", "QUICK ATTACK"};
+            for (String attackName : attackNames) {
+                JButton attackButton = createActionButton(attackName);
+                actionPanel.add(attackButton);
+            }
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.gridwidth = 2; // Melintasi dua kolom
+            gbc.weightx = 0.5; // Agar panel tombol bisa mengisi horizontal jika perlu
+            gbc.weighty = 0;
+            gbc.anchor = GridBagConstraints.SOUTHEAST;
+            gbc.fill = GridBagConstraints.NONE; // Tidak mengisi, hanya seukuran preferensinya
+            gbc.insets = new Insets(0, 0, 10, 0); // Padding atas dan bawah untuk panel tombol
+            mainPanel.add(actionPanel, gbc);
 
-        backgroundContentPane.add(mainPanel, BorderLayout.CENTER);
-        updateHealthBars();
+            backgroundContentPane.add(mainPanel, BorderLayout.CENTER);
+            updateHealthBars();
+        });
     }
 
     private JPanel createCharacterPanel(String characterName, boolean isEnemy) {
@@ -382,7 +388,7 @@ public class PokemonBattleUI extends JFrame {
 
         if (!message1.isEmpty()) {
             // Logika untuk menonaktifkan tombol (sudah ada dan seharusnya berfungsi)
-            Component mainPanelComponent = getContentPane().getComponent(0);
+            Component mainPanelComponent = window.getContentPane().getComponent(0);
             if (mainPanelComponent instanceof JPanel) {
                 JPanel actualMainPanel = (JPanel) mainPanelComponent;
                 for(Component potentialActionPanel : actualMainPanel.getComponents()){
@@ -455,15 +461,15 @@ public class PokemonBattleUI extends JFrame {
         public boolean isBorderOpaque() { return false; } // Border tidak mengisi background
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        SwingUtilities.invokeLater(() -> {
-            PokemonBattleUI game = new PokemonBattleUI();
-            game.setVisible(true);
-        });
-    }
+//    public static void main(String[] args) {
+//        try {
+//            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        SwingUtilities.invokeLater(() -> {
+//            PokemonBattleUI game = new PokemonBattleUI(new GameWindow());
+//            game.setVisible(true);
+//        });
+//    }
 }

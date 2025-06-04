@@ -22,29 +22,31 @@ public class ShowcaseScreen extends JPanel {
     private static final String LANJUT_BUTTON_IMG_PATH = "/Assets/Showcase/buttonLanjut.png";
     private static final String POKEMON_DB_JSON_PATH = "/resources/pokemon-dataset.json";
 
-    private static final int LOGO_SMALL_WIDTH = 100;
-    private static final int LOGO_SMALL_HEIGHT = 40;
-    private static final int LOGO_SMALL_X = 20;
-    private static final int LOGO_SMALL_Y = 15;
+    private static final int LOGO_SMALL_WIDTH = 125;
+    private static final int LOGO_SMALL_HEIGHT = 50;
+    private static final int LOGO_SMALL_X = 28;
+    private static final int LOGO_SMALL_Y = 21;
 
     private static final int TITLE_WIDTH = 450;
     private static final int TITLE_HEIGHT = 80;
     private static final int TITLE_Y_OFFSET = LOGO_SMALL_Y + LOGO_SMALL_HEIGHT + 15;
 
     private static final int MAX_CARDS_TO_SHOW = 3;
-    private static final int CARD_SPACING = 25;
-    private static final int CARD_ROW_Y_TOP = TITLE_Y_OFFSET + TITLE_HEIGHT + 40;
+    private static final int CARD_SPACING = 20;
+    private static final int CARD_ROW_Y_TOP = TITLE_Y_OFFSET + TITLE_HEIGHT + 30;
 
-    private static final int LANJUT_BUTTON_WIDTH = 180;
-    private static final int LANJUT_BUTTON_HEIGHT = 60;
-    private static final int LANJUT_BUTTON_MARGIN_RIGHT = 40;
-    private static final int LANJUT_BUTTON_MARGIN_BOTTOM = 30;
+    private static final int LANJUT_BUTTON_WIDTH = 240;
+    private static final int LANJUT_BUTTON_HEIGHT = 80;
+    private static final int LANJUT_BUTTON_MARGIN_RIGHT = 90;
+    private static final int LANJUT_BUTTON_MARGIN_BOTTOM = 70;
 
 
     public ShowcaseScreen(GameWindow window) {
         this.gameWindow = window;
         setLayout(null);
         backgroundImage = ImageLoader.loadImage(BACKGROUND_IMG_PATH);
+        setSize(700, 600);
+        setOpaque(true);
 
         BufferedImage originalPokemonLogo = ImageLoader.loadImage(POKEMON_LOGO_PATH);
         if (originalPokemonLogo != null) {
@@ -101,12 +103,14 @@ public class ShowcaseScreen extends JPanel {
                 public void actionPerformed(ActionEvent e) {
                     System.out.println("Tombol LANJUT diklik!");
                     if (gameWindow != null) {
+                        PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow);
+                        gameWindow.switchPanel(pokemonBattleUI);
                         // Aksi selanjutnya, misalnya berpindah ke layar pemilihan karakter atau battle
                         // gameWindow.showCharacterSelectionScreen();
-                        JOptionPane.showMessageDialog(gameWindow,
-                                "Tombol LANJUT diklik! Fitur selanjutnya belum ada.",
-                                "Info Showcase",
-                                JOptionPane.INFORMATION_MESSAGE);
+//                        JOptionPane.showMessageDialog(gameWindow,
+//                                "Tombol LANJUT diklik! Fitur selanjutnya belum ada.",
+//                                "Info Showcase",
+//                                JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
             });
@@ -148,27 +152,24 @@ public class ShowcaseScreen extends JPanel {
             int cardActualWidth = (int) cardSize.getWidth();
             int cardActualHeight = (int) cardSize.getHeight();
 
-            // Hitung posisi X untuk kartu pertama di baris atas (agar grup kartu terpusat)
-            // Lebar total 2 kartu + spacing: (2 * cardActualWidth) + CARD_SPACING
-            // Sisa ruang: getWidth() - ((2 * cardActualWidth) + CARD_SPACING)
-            // Margin kiri untuk grup: (Sisa ruang) / 2
-            // X kartu pertama: Margin kiri untuk grup
             int groupWidthTwoCards = (2 * cardActualWidth) + CARD_SPACING;
             int card1X = (getWidth() - groupWidthTwoCards) / 2;
 
             if (card1X < CARD_SPACING) card1X = CARD_SPACING;
 
+            int cardRowYTopActual = CARD_ROW_Y_TOP;
+
             if(pokemonCardPanels.size() > 0) {
-                pokemonCardPanels.get(0).setBounds(card1X, CARD_ROW_Y_TOP, cardActualWidth, cardActualHeight);
+                pokemonCardPanels.get(0).setBounds(card1X, cardRowYTopActual, cardActualWidth, cardActualHeight);
             }
 
             if (pokemonCardPanels.size() > 1) {
                 int card2X = card1X + cardActualWidth + CARD_SPACING;
-                pokemonCardPanels.get(1).setBounds(card2X, CARD_ROW_Y_TOP, cardActualWidth, cardActualHeight);
+                pokemonCardPanels.get(1).setBounds(card2X, cardRowYTopActual, cardActualWidth, cardActualHeight);
             }
 
             if (pokemonCardPanels.size() > 2) {
-                int cardRowYBottom = CARD_ROW_Y_TOP + cardActualHeight + CARD_SPACING;
+                int cardRowYBottom = cardRowYTopActual + cardActualHeight + CARD_SPACING;
                 pokemonCardPanels.get(2).setBounds(card1X, cardRowYBottom, cardActualWidth, cardActualHeight);
             }
         }
@@ -180,5 +181,12 @@ public class ShowcaseScreen extends JPanel {
         }
 
         g2d.dispose();
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            ShowcaseScreen game = new ShowcaseScreen(new GameWindow());
+            game.setVisible(true);
+        });
     }
 }

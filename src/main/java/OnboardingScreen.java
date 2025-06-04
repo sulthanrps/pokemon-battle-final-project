@@ -30,6 +30,7 @@ public class OnboardingScreen extends JPanel {
     public OnboardingScreen(GameWindow window) {
         this.gameWindow = window;
         setOpaque(true);
+        setSize(700, 600);
 
         backgroundImage = ImageLoader.loadImage(BACKGROUND_IMG_PATH);
         pokemonLogoImage = ImageLoader.loadImage(LOGO_IMG_PATH);
