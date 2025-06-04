@@ -11,7 +11,7 @@ import java.util.List;
 public class PokemonDataLoader {
     private static final String POKEMON_DB_JSON_PATH = "pokemon-dataset.json";
 
-    public static List<PokemonData> loadPokemonData() {
+    public static List<PokemonDataLoader> loadPokemonData() {
         List<PokemonData> pokemonList = new ArrayList<>();
         InputStream is = null;
 
