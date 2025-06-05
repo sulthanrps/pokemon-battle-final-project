@@ -20,6 +20,10 @@ public class Pokemon {
         this.moves = moves;
     }
 
+    public Pokemon() {
+
+    }
+
     // ***Getters and Setters (Crucial!)***
     public String getName() {
         return name;
