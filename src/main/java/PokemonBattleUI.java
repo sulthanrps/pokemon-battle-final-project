@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.awt.geom.RoundRectangle2D;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import javax.imageio.ImageIO;
 import javax.swing.plaf.basic.BasicProgressBarUI;// Pastikan FontManager Anda sudah benar
 
@@ -34,6 +35,9 @@ public class PokemonBattleUI extends JPanel {
     private int playerCurrentHP = 100; // Sesuaikan dengan HP awal di target
     private int enemyCurrentHP = 100;  // Sesuaikan dengan HP awal di target
     private final int MAX_HP = 100;
+
+    private Pokemon pokemonPlayer;
+    private Pokemon pokemonEnemy;
 
     class BackgroundPanel extends JPanel {
         private Image bgImage;
@@ -63,8 +67,13 @@ public class PokemonBattleUI extends JPanel {
         }
     }
 
-    public PokemonBattleUI(GameWindow gameWindow) {
+    public PokemonBattleUI(GameWindow gameWindow, Pokemon pokemon) {
         this.gameWindow = gameWindow;
+        pokemonPlayer = pokemon;
+
+        // enemy pokemon
+        pokemonEnemy = new Pokemon("Electrivire", Type.ELECTRIC, 100, 125, 67, new ArrayList<>());
+
         SwingUtilities.invokeLater(() -> {
             window = new JFrame("Pokemon Battle");
             window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -118,7 +127,7 @@ public class PokemonBattleUI extends JPanel {
             mainPanel.add(enemyPanel, gbc);
 
             // --- Panel Pemain (Kiri Bawah) ---
-            JPanel playerPanel = createCharacterPanel("SNORLAX", false);
+            JPanel playerPanel = createCharacterPanel(pokemonPlayer.getName(), false);
             playerPanel.setOpaque(false);
             gbc.gridx = 0;
             gbc.gridy = 2;
@@ -135,8 +144,10 @@ public class PokemonBattleUI extends JPanel {
             // actionPanel.setBorder(new EmptyBorder(0, 0, 10, 0)); // Dihapus agar lebih fleksibel dengan anchor SOUTH
 
             String[] attackNames = {"THUNDER", "IRON TAIL", "ELECTRO BALL", "QUICK ATTACK"};
-            for (String attackName : attackNames) {
-                JButton attackButton = createActionButton(attackName);
+
+            ArrayList<Move> moves = pokemonPlayer.getMoves();
+            for (Move move : moves) {
+                JButton attackButton = createActionButton(move);
                 actionPanel.add(attackButton);
             }
             gbc.gridx = 0;
@@ -197,7 +208,7 @@ public class PokemonBattleUI extends JPanel {
         // Ukuran container disesuaikan agar pokemon dan teratai pas
         JLabel pokemonSpriteLabel = new JLabel();
         pokemonSpriteLabel.setOpaque(false);
-        String spritePath = isEnemy ? "/Assets/Pokemons/electivire.gif" : "/Assets/Pokemons/pikachu-playable.gif";
+        String spritePath = isEnemy ? "/Assets/Pokemons/electivire.gif" : "/Assets/Pokemons/" + pokemonPlayer.getName().toLowerCase() + "-playable.gif";
         URL imageUrl = getClass().getResource(spritePath);
         ImageIcon pokemonIcon = null;
 
@@ -296,10 +307,10 @@ public class PokemonBattleUI extends JPanel {
         return panel;
     }
 
-    private JButton createActionButton(String actionName) {
+    private JButton createActionButton(Move move) {
         final int cornerRadius = 35; // Radius lebih besar untuk tombol lebih bulat (pill shape)
 
-        JButton button = new JButton(actionName) {
+        JButton button = new JButton(move.getName()) {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -317,7 +328,7 @@ public class PokemonBattleUI extends JPanel {
 
         button.setFont(FontManager.BUTTON_FONT); // Gunakan dari FontManager
         button.setBackground(BUTTON_BG_COLOR);
-        button.setForeground(Color.DARK_GRAY); // Teks gelap di target
+        button.setForeground(Color.WHITE); // Teks gelap di target
 
         button.setFocusPainted(false);
         // Border disesuaikan dengan target (warna garis border)
@@ -332,13 +343,13 @@ public class PokemonBattleUI extends JPanel {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println(actionName + " digunakan!");
-                int damageToEnemy = (int) (Math.random() * 11) + 10; // Antara 10 dan 20
+                System.out.println(move.getName() + " digunakan!");
+                int damageToEnemy = BattleMechanism.calculateDamage(pokemonPlayer, move, pokemonEnemy); // Antara 10 dan 20
                 enemyCurrentHP -= damageToEnemy;
                 if (enemyCurrentHP < 0) enemyCurrentHP = 0;
 
                 if (enemyCurrentHP > 0) {
-                    int damageToPlayer = (int) (Math.random() * 11) + 5; // Antara 5 dan 15
+                    int damageToPlayer = (int) (Math.random() * 5) + 5; // Antara 5 dan 15
                     playerCurrentHP -= damageToPlayer;
                     if (playerCurrentHP < 0) playerCurrentHP = 0;
                 }

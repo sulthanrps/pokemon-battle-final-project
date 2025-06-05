@@ -34,7 +34,7 @@ public class BattleMechanism {
 
     public static int calculateDamage(Pokemon attacker, Move move, Pokemon defender) {
         double effectiveness = getTypeEffectiveness(move.getType(), defender.getType()); // src.main.java.Type effectiveness
-        int damage = (int) ((move.getPower() * attacker.getAttack() / defender.getDefense()) * effectiveness);
+        int damage = (int) ((move.getPower() * (attacker.getAttack() / 8) / defender.getDefense()) * effectiveness);
         return Math.max(0, damage); // Ensure damage is not negative
     }
 

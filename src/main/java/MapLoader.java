@@ -1,230 +1,281 @@
-// Pastikan package ini sesuai dengan struktur foldermuimport javax.imageio.ImageIO;
+// package com.yourpackage; // Sesuaikan dengan struktur package Anda
+
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList; // Import ArrayList
-import java.util.List;    // Import List
-import java.util.Random;   // Import Random
-import javax.imageio.ImageIO;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 public class MapLoader extends JPanel implements Runnable {
 
-    // --- KONFIGURASI MAP ---
-    private static final int TILE_SIZE = 32;
-    private static final int MAP_COLUMNS = 20;
-    private static final int MAP_ROWS = 15;
+    // --- KONFIGURASI MAP (Target Jumlah Tile yang Terlihat) ---
+    private static final int TARGET_VISIBLE_COLUMNS = 20;
+    private static final int TARGET_VISIBLE_ROWS = 15;
+    private double currentTileSizeW;
+    private double currentTileSizeH;
 
     // --- KONFIGURASI PLAYER ---
     private int originalPlayerSpriteWidth = 11;
     private int originalPlayerSpriteHeight = 18;
+    private double playerAspectRatio;
     private int displayPlayerWidth;
     private int displayPlayerHeight;
-    private static final double PLAYER_SCALE_FACTOR = 0.3;
-    private static final int PLAYER_SPEED = 4;
+    private static final double PLAYER_SCALE_RELATIVE_TO_TILE_HEIGHT = 0.8;
+    private double playerSpeed;
+    private static final double PLAYER_SPEED_FACTOR_PER_TILE = 0.125;
 
-    private GameWindow gameWindow;
-
+    private GameWindow gameWindow; // Asumsi ada kelas GameWindow
     private BufferedImage grassTile;
+
     // --- Variabel Animasi Player ---
     private BufferedImage[] playerUpFrames = new BufferedImage[2];
     private BufferedImage[] playerDownFrames = new BufferedImage[2];
     private BufferedImage[] playerLeftFrames = new BufferedImage[2];
     private BufferedImage[] playerRightFrames = new BufferedImage[2];
     private BufferedImage currentPlayerSprite;
-
     private int animationFrameIndex = 0;
     private int animationCounter = 0;
     private static final int ANIMATION_SPEED = 5;
 
-    // --- Variabel Posisi & Arah Player ---
-    private int playerX, playerY;
+    // --- Variabel Posisi & Arah Player (Koordinat Logis) ---
+    private double playerLogicalX, playerLogicalY;
+    private int playerRenderX, playerRenderY;
     private Direction playerDirection = Direction.DOWN;
 
-    // --- Variabel Status Input ---
     private boolean upPressed, downPressed, leftPressed, rightPressed;
 
     // --- KONFIGURASI & VARIABEL NPC ---
     private List<PokemonNPC> npcs;
-    private BufferedImage pikachuSprite, charizardSprite, greninjaSprite; // Sprite dasar NPC
-    private static final int NUM_PIKACHUS = 1;    // Jumlah Pikachu yang akan muncul
-    private static final int NUM_CHARIZARDS = 1;  // Jumlah Charizard
-    private static final int NUM_GRENINJAS = 2;   // Jumlah Greninja
-    private static final double NPC_SCALE_FACTOR = 0.3; // Skala untuk NPC (misal, 0.5x ukuran asli)
-    // Pikachu 64x64 -> 32x32 dengan skala 0.5
+    private ImageIcon turtwigGif, electivireGif, infernapeGif; // Untuk GIF NPC
+
+    // Jumlah NPC baru
+    private static final int NUM_TURTWIGS = 3;
+    private static final int NUM_ELECTIVIRES = 3;
+    private static final int NUM_INFERNAPES = 4;
+
+    private static final double NPC_SCALE_RELATIVE_TO_TILE_HEIGHT = 0.9; // Skala NPC sedikit lebih besar
     private Random randomGenerator;
 
-
-    // --- Variabel Status Interaksi NPC ---
     private boolean isDialogActive = false;
-    private PokemonNPC currentlyInteractingNPC = null; // Menyimpan NPC yang sedang diajak interaksi
-
+    private PokemonNPC currentlyInteractingNPC = null;
 
     private Thread gameThread;
     private final int FPS = 30;
 
-    // Inner class untuk NPC (letakkan di sini atau di akhir file GamePanel)
+    enum Direction {UP, DOWN, LEFT, RIGHT}
+
     private static class PokemonNPC {
-        // ... (definisi kelas PokemonNPC seperti di atas) ...
-        int x, y;
-        BufferedImage sprite;
-        String type;
-        int originalWidth, originalHeight;
+        double logicalX, logicalY;
+        int renderX, renderY;
+        ImageIcon gifSprite;
+        String type; // Nama Pokemon (misal "Turtwig")
         int displayWidth, displayHeight;
 
-        public PokemonNPC(String type, BufferedImage sprite, int x, int y, double scaleFactor) {
+        public PokemonNPC(String type, ImageIcon gifSprite, double logicalX, double logicalY) {
             this.type = type;
-            this.sprite = sprite;
-            this.x = x;
-            this.y = y;
+            this.gifSprite = gifSprite;
+            this.logicalX = logicalX;
+            this.logicalY = logicalY;
+        }
 
-            if (sprite != null) {
-                this.originalWidth = sprite.getWidth();
-                this.originalHeight = sprite.getHeight();
-                this.displayWidth = (int) (this.originalWidth * scaleFactor);
-                this.displayHeight = (int) (this.originalHeight * scaleFactor);
-
+        public void updateSizeAndPosition(double tileW, double tileH, double scaleRelativeToTileHeight, Component c) {
+            if (gifSprite == null) {
+                this.displayWidth = (int) (tileW * scaleRelativeToTileHeight * 0.5); // Ukuran fallback
+                this.displayHeight = (int) (tileH * scaleRelativeToTileHeight);     // Ukuran fallback
                 if (this.displayWidth < 1) this.displayWidth = 1;
                 if (this.displayHeight < 1) this.displayHeight = 1;
-            } else {
-                this.originalWidth = 32;
-                this.originalHeight = 32;
-                this.displayWidth = (int) (this.originalWidth * scaleFactor);
-                this.displayHeight = (int) (this.originalHeight * scaleFactor);
-                System.err.println("Sprite untuk NPC " + type + " adalah null saat pembuatan objek.");
+                this.renderX = (int) (this.logicalX * tileW - this.displayWidth / 2.0);
+                this.renderY = (int) (this.logicalY * tileH - this.displayHeight / 2.0);
+                return;
             }
+
+            int originalGifWidth = gifSprite.getIconWidth();
+            int originalGifHeight = gifSprite.getIconHeight();
+            double currentAspectRatio = 1.0;
+            if (originalGifHeight > 0) {
+                currentAspectRatio = (double) originalGifWidth / originalGifHeight;
+            }
+
+            this.displayHeight = (int) (tileH * scaleRelativeToTileHeight);
+            this.displayWidth = (int) (this.displayHeight * currentAspectRatio);
+
+            if (this.displayWidth < 1) this.displayWidth = 1;
+            if (this.displayHeight < 1) this.displayHeight = 1;
+
+            this.renderX = (int) (this.logicalX * tileW - this.displayWidth / 2.0);
+            this.renderY = (int) (this.logicalY * tileH - this.displayHeight / 2.0);
+        }
+
+        public ImageIcon getGifSprite() {
+            return gifSprite;
         }
     }
 
-
     public MapLoader(GameWindow gameWindow) {
         this.gameWindow = gameWindow;
-        setPreferredSize(new Dimension(MAP_COLUMNS * TILE_SIZE, MAP_ROWS * TILE_SIZE));
         setBackground(Color.BLACK);
         setDoubleBuffered(true);
         setFocusable(true);
 
-        npcs = new ArrayList<>(); // Inisialisasi list NPC
-        randomGenerator = new Random(); // Inisialisasi generator angka acak
+        npcs = new ArrayList<>();
+        randomGenerator = new Random();
 
-        loadResources(); // Memuat sprite player DAN NPC
-        initPlayer();    // Inisialisasi player
-        initNPCs();      // Inisialisasi NPC setelah resource dimuat
+        loadResources();
 
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                System.out.println("Panel resized to: " + getWidth() + "x" + getHeight());
+                updateGameLayoutAndElements();
+            }
+            @Override
+            public void componentShown(ComponentEvent e) {
+                System.out.println("Panel shown: " + getWidth() + "x" + getHeight());
+                if (getWidth() > 0 && getHeight() > 0) {
+                    updateGameLayoutAndElements();
+                }
+            }
+        });
         addKeyListener(new PlayerKeyAdapter());
     }
 
     private BufferedImage loadImage(String path) throws IOException {
         InputStream stream = getClass().getResourceAsStream(path);
         if (stream == null) {
-            // Jangan throw exception di sini jika beberapa NPC opsional, cukup return null dan tangani
             System.err.println("Peringatan: File tidak ditemukan: " + path + ". Sprite akan null.");
             return null;
         }
         return ImageIO.read(stream);
     }
 
+    private ImageIcon loadGifIcon(String path) {
+        URL imgURL = getClass().getResource(path);
+        if (imgURL != null) {
+            return new ImageIcon(imgURL);
+        } else {
+            System.err.println("Peringatan: File GIF tidak ditemukan: " + path);
+            return null;
+        }
+    }
+
     private void loadResources() {
         try {
-            grassTile = loadImage("Assets/MapItem/grass_tile.png");
-            if (grassTile == null) throw new IOException("grass_tile.png gagal dimuat!"); // Map tile harus ada
+            grassTile = loadImage("/Assets/MapItem/grass_tile.png");
+            if (grassTile == null) throw new IOException("grass_tile.png gagal dimuat!");
 
-            // Player sprites
-            playerDownFrames[0] = loadImage("Assets/MapItem/player_down_1.png");
-            playerDownFrames[1] = loadImage("Assets/MapItem/player_down_2.png");
-            // ... (muat semua frame player lainnya) ...
-            playerUpFrames[0] = loadImage("Assets/MapItem/player_up_1.png");
-            playerUpFrames[1] = loadImage("Assets/MapItem/player_up_2.png");
-            playerLeftFrames[0] = loadImage("Assets/MapItem/player_left_1.png");
-            playerLeftFrames[1] = loadImage("Assets/MapItem/player_left_2.png");
-            playerRightFrames[0] = loadImage("Assets/MapItem/player_right_1.png");
-            playerRightFrames[1] = loadImage("Assets/MapItem/player_right_2.png");
-
+            playerDownFrames[0] = loadImage("/Assets/MapItem/player_down_1.png");
+            playerDownFrames[1] = loadImage("/Assets/MapItem/player_down_2.png");
+            playerUpFrames[0] = loadImage("/Assets/MapItem/player_up_1.png");
+            playerUpFrames[1] = loadImage("/Assets/MapItem/player_up_2.png");
+            playerLeftFrames[0] = loadImage("/Assets/MapItem/player_left_1.png");
+            playerLeftFrames[1] = loadImage("/Assets/MapItem/player_left_2.png");
+            playerRightFrames[0] = loadImage("/Assets/MapItem/player_right_1.png");
+            playerRightFrames[1] = loadImage("/Assets/MapItem/player_right_2.png");
 
             if (playerDownFrames[0] != null) {
                 originalPlayerSpriteWidth = playerDownFrames[0].getWidth();
                 originalPlayerSpriteHeight = playerDownFrames[0].getHeight();
+                playerAspectRatio = (double) originalPlayerSpriteWidth / originalPlayerSpriteHeight;
             } else {
-                System.err.println("player_down_1.png (player) gagal dimuat, menggunakan ukuran asli default.");
+                System.err.println("player_down_1.png gagal dimuat, menggunakan ukuran asli default dan rasio 1:1.");
+                playerAspectRatio = 1.0;
             }
-            displayPlayerWidth = (int) (originalPlayerSpriteWidth * PLAYER_SCALE_FACTOR);
-            displayPlayerHeight = (int) (originalPlayerSpriteHeight * PLAYER_SCALE_FACTOR);
-            if (displayPlayerWidth < 1) displayPlayerWidth = 1;
-            if (displayPlayerHeight < 1) displayPlayerHeight = 1;
-            currentPlayerSprite = playerDownFrames[0]; // Asumsi player_down_1.png ada
+            currentPlayerSprite = playerDownFrames[0] != null ? playerDownFrames[0] : new BufferedImage(1,1, BufferedImage.TYPE_INT_ARGB);
 
-            // NPC Sprites
-            // TODO: Ganti "pikachu.png" dengan nama file gambar Pikachu-mu (misal, dari image_ceb734.png)
-            pikachuSprite = loadImage("Assets/MapItem/pikachu.png");
-            // TODO: Kamu perlu menyediakan file charizard.png dan greninja.png
-            charizardSprite = loadImage("Assets/MapItem/pikachu.png");
-            greninjaSprite = loadImage("Assets/MapItem/pikachu.png");
+            turtwigGif = loadGifIcon("/Assets/Pokemons/turtwig.gif");
+            electivireGif = loadGifIcon("/Assets/Pokemons/electivire.gif");
+            infernapeGif = loadGifIcon("/Assets/Pokemons/infernape.gif");
+
+            if (turtwigGif == null) System.err.println("Turtwig.gif gagal dimuat.");
+            if (electivireGif == null) System.err.println("Electivire.gif gagal dimuat.");
+            if (infernapeGif == null) System.err.println("Infernape.gif gagal dimuat.");
 
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Gagal memuat resource game: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            System.exit(1); // Keluar jika resource penting gagal dimuat
+            System.exit(1);
         }
     }
 
-    private void initNPCs() {
-        npcs.clear(); // Bersihkan NPC lama jika ada (berguna jika ingin reset)
-        int panelWidth = MAP_COLUMNS * TILE_SIZE;
-        int panelHeight = MAP_ROWS * TILE_SIZE;
+    private void updateGameLayoutAndElements() {
+        int panelWidth = getWidth();
+        int panelHeight = getHeight();
 
-        // Spawn Pikachus
-        spawnSpecificNPCs("Pikachu", pikachuSprite, NUM_PIKACHUS, panelWidth, panelHeight);
-        // Spawn Charizards
-        spawnSpecificNPCs("Charizard", charizardSprite, NUM_CHARIZARDS, panelWidth, panelHeight);
-        // Spawn Greninjas
-        spawnSpecificNPCs("Greninja", greninjaSprite, NUM_GRENINJAS, panelWidth, panelHeight);
+        if (panelWidth <= 0 || panelHeight <= 0) return;
 
-        System.out.println("Inisialisasi " + npcs.size() + " NPC.");
-    }
+        currentTileSizeW = (double) panelWidth / TARGET_VISIBLE_COLUMNS;
+        currentTileSizeH = (double) panelHeight / TARGET_VISIBLE_ROWS;
 
-    private void spawnSpecificNPCs(String type, BufferedImage sprite, int count, int panelWidth, int panelHeight) {
-        if (sprite == null) {
-            System.err.println("Sprite untuk " + type + " belum dimuat. Melewati spawn untuk tipe ini.");
-            return;
+        displayPlayerHeight = (int) (currentTileSizeH * PLAYER_SCALE_RELATIVE_TO_TILE_HEIGHT);
+        displayPlayerWidth = (int) (displayPlayerHeight * playerAspectRatio);
+        if (displayPlayerWidth < 1) displayPlayerWidth = 1;
+        if (displayPlayerHeight < 1) displayPlayerHeight = 1;
+        playerSpeed = currentTileSizeW * PLAYER_SPEED_FACTOR_PER_TILE;
+
+        boolean isFirstLayout = (playerLogicalX == 0 && playerLogicalY == 0 && npcs.isEmpty());
+        if (isFirstLayout) {
+            initPlayerLogicalPosition();
+            initNPCsLogicalPositions();
+        }
+        updatePlayerRenderPosition();
+
+        for (PokemonNPC npc : npcs) {
+            npc.updateSizeAndPosition(currentTileSizeW, currentTileSizeH, NPC_SCALE_RELATIVE_TO_TILE_HEIGHT, this);
         }
 
-        for (int i = 0; i < count; i++) {
-            int npcDisplayWidth = (int) (sprite.getWidth() * NPC_SCALE_FACTOR);
-            int npcDisplayHeight = (int) (sprite.getHeight() * NPC_SCALE_FACTOR);
-            if (npcDisplayWidth < 1) npcDisplayWidth = 1;
-            if (npcDisplayHeight < 1) npcDisplayHeight = 1;
-
-            if (panelWidth <= npcDisplayWidth || panelHeight <= npcDisplayHeight) {
-                System.err.println("Panel terlalu kecil untuk menempatkan " + type + " atau sprite terlalu besar.");
-                continue;
-            }
-
-            int npcX = randomGenerator.nextInt(panelWidth - npcDisplayWidth);
-            int npcY = randomGenerator.nextInt(panelHeight - npcDisplayHeight);
-            npcs.add(new PokemonNPC(type, sprite, npcX, npcY, NPC_SCALE_FACTOR));
-        }
+        System.out.println("Layout Updated. TileW: " + String.format("%.2f",currentTileSizeW) +
+                ", TileH: " + String.format("%.2f", currentTileSizeH) +
+                ", Player Display: " + displayPlayerWidth + "x" + displayPlayerHeight +
+                ", Player Speed: " + String.format("%.2f",playerSpeed));
+        repaint();
     }
 
-
-    private void initPlayer() {
-        playerX = (MAP_COLUMNS * TILE_SIZE) / 2 - displayPlayerWidth / 2;
-        playerY = (MAP_ROWS * TILE_SIZE) / 2 - displayPlayerHeight / 2;
+    private void initPlayerLogicalPosition() {
+        playerLogicalX = TARGET_VISIBLE_COLUMNS / 2.0;
+        playerLogicalY = TARGET_VISIBLE_ROWS / 2.0;
         playerDirection = Direction.DOWN;
         animationFrameIndex = 0;
         if (playerDownFrames[0] != null) {
             currentPlayerSprite = playerDownFrames[animationFrameIndex];
-        } else if (playerUpFrames[0] != null) { // Fallback jika down frame tidak ada
-            currentPlayerSprite = playerUpFrames[animationFrameIndex];
-        } // Tambahkan fallback lain jika perlu
-
-
+        }
         upPressed = false;
         downPressed = false;
         leftPressed = false;
         rightPressed = false;
+    }
+
+    private void updatePlayerRenderPosition() {
+        playerRenderX = (int) (playerLogicalX * currentTileSizeW - displayPlayerWidth / 2.0);
+        playerRenderY = (int) (playerLogicalY * currentTileSizeH - displayPlayerHeight / 2.0);
+    }
+
+    private void initNPCsLogicalPositions() {
+        npcs.clear();
+        spawnSpecificNPCsLogically("Turtwig", turtwigGif, NUM_TURTWIGS);
+        spawnSpecificNPCsLogically("Electivire", electivireGif, NUM_ELECTIVIRES);
+        spawnSpecificNPCsLogically("Infernape", infernapeGif, NUM_INFERNAPES);
+        System.out.println("Inisialisasi " + npcs.size() + " NPC GIF (posisi logis).");
+    }
+
+    private void spawnSpecificNPCsLogically(String type, ImageIcon gifIcon, int count) {
+        if (gifIcon == null) {
+            System.err.println("ImageIcon untuk " + type + " belum dimuat. Melewati spawn.");
+            return;
+        }
+        for (int i = 0; i < count; i++) {
+            double npcLogicalX = randomGenerator.nextDouble() * TARGET_VISIBLE_COLUMNS;
+            double npcLogicalY = randomGenerator.nextDouble() * TARGET_VISIBLE_ROWS;
+            npcs.add(new PokemonNPC(type, gifIcon, npcLogicalX, npcLogicalY));
+        }
     }
 
     public void startGameThread() {
@@ -234,7 +285,6 @@ public class MapLoader extends JPanel implements Runnable {
 
     @Override
     public void run() {
-        // ... (kode run() tetap sama) ...
         double drawInterval = 1000000000.0 / FPS;
         double delta = 0;
         long lastTime = System.nanoTime();
@@ -246,44 +296,52 @@ public class MapLoader extends JPanel implements Runnable {
             lastTime = currentTime;
 
             if (delta >= 1) {
-                update();
-                repaint();
+                updateGameLogic();
+                repaint(); // Panggil repaint di sini, di dalam game loop utama
                 delta--;
             }
         }
     }
 
-    private void update() {
-        // Jika dialog sedang aktif, hentikan update logika game utama (pergerakan, animasi player)
+    private void updateGameLogic() {
         if (isDialogActive) {
-            setPlayerToStandingFrame(); // Buat player tampak diam
+            setPlayerToStandingFrame();
             return;
         }
 
-        // --- Logika Gerakan Player ---
-        int oldPlayerX = playerX;
-        int oldPlayerY = playerY;
+        boolean moved = false;
+        // Kecepatan logis dihitung berdasarkan kecepatan piksel dan ukuran tile saat ini
+        double logicalSpeedX = (currentTileSizeW > 0) ? playerSpeed / currentTileSizeW : 0;
+        double logicalSpeedY = (currentTileSizeH > 0) ? playerSpeed / currentTileSizeH : 0;
 
-        // (Blok kode gerakan player if (upPressed) ... else if ... tetap sama)
+
         if (upPressed) {
-            playerY -= PLAYER_SPEED;
+            playerLogicalY -= logicalSpeedY;
             playerDirection = Direction.UP;
+            moved = true;
         } else if (downPressed) {
-            playerY += PLAYER_SPEED;
+            playerLogicalY += logicalSpeedY;
             playerDirection = Direction.DOWN;
+            moved = true;
         } else if (leftPressed) {
-            playerX -= PLAYER_SPEED;
+            playerLogicalX -= logicalSpeedX;
             playerDirection = Direction.LEFT;
+            moved = true;
         } else if (rightPressed) {
-            playerX += PLAYER_SPEED;
+            playerLogicalX += logicalSpeedX;
             playerDirection = Direction.RIGHT;
+            moved = true;
         }
 
-        playerX = Math.max(0, Math.min(playerX, getWidth() - displayPlayerWidth));
-        playerY = Math.max(0, Math.min(playerY, getHeight() - displayPlayerHeight));
-        boolean moved = (playerX != oldPlayerX || playerY != oldPlayerY);
+        // Batasan pergerakan player
+        double playerLogicalHalfWidth = (currentTileSizeW > 0) ? (displayPlayerWidth / 2.0) / currentTileSizeW : 0;
+        double playerLogicalHalfHeight = (currentTileSizeH > 0) ? (displayPlayerHeight / 2.0) / currentTileSizeH : 0;
 
-        // --- Logika Animasi Player ---
+        playerLogicalX = Math.max(playerLogicalHalfWidth, Math.min(playerLogicalX, TARGET_VISIBLE_COLUMNS - playerLogicalHalfWidth));
+        playerLogicalY = Math.max(playerLogicalHalfHeight, Math.min(playerLogicalY, TARGET_VISIBLE_ROWS - playerLogicalHalfHeight));
+
+        updatePlayerRenderPosition();
+
         if (moved) {
             animationCounter++;
             if (animationCounter >= ANIMATION_SPEED) {
@@ -294,126 +352,115 @@ public class MapLoader extends JPanel implements Runnable {
             animationFrameIndex = 0;
             animationCounter = 0;
         }
-        updateCurrentPlayerSprite(); // Panggil method baru untuk update sprite player
+        updateCurrentPlayerSprite();
 
-        // --- Cek Interaksi dengan NPC ---
-        // Iterasi menggunakan salinan list jika kamu berencana menghapus NPC dari dalam loop
-        for (PokemonNPC npc : new ArrayList<>(npcs)) {
-            Rectangle playerBounds = new Rectangle(playerX, playerY, displayPlayerWidth, displayPlayerHeight);
-            Rectangle npcBounds = new Rectangle(npc.x, npc.y, npc.displayWidth, npc.displayHeight);
-
+        Rectangle playerBounds = new Rectangle(playerRenderX, playerRenderY, displayPlayerWidth, displayPlayerHeight);
+        for (PokemonNPC npc : npcs) {
+            Rectangle npcBounds = new Rectangle(npc.renderX, npc.renderY, npc.displayWidth, npc.displayHeight);
             if (playerBounds.intersects(npcBounds)) {
-                isDialogActive = true; // Penting: Set flag SEBELUM panggil dialog
-                currentlyInteractingNPC = npc;
-                showEncounterDialog(npc);
-                return; // Hentikan update lebih lanjut di frame ini, dialog akan muncul
+                if (currentlyInteractingNPC != npc || !isDialogActive) {
+                    isDialogActive = true;
+                    currentlyInteractingNPC = npc;
+                    showEncounterDialog(npc);
+                    return;
+                }
             }
         }
     }
 
     private void showEncounterDialog(PokemonNPC npc) {
-        // Menggunakan SwingUtilities.invokeLater untuk memastikan dialog dijalankan di Event Dispatch Thread (EDT)
         SwingUtilities.invokeLater(() -> {
             String[] options = {"Lawan", "Menghindar"};
-            String message = "Kamu bertemu dengan " + npc.type + "!\nApa yang akan kamu lakukan?";
-
-            // Simpan status tombol sebelum dialog muncul
-            boolean prevUp = upPressed, prevDown = downPressed, prevLeft = leftPressed, prevRight = rightPressed;
-            // Reset status tombol agar player tidak bergerak otomatis setelah dialog
-            upPressed = downPressed = leftPressed = rightPressed = false;
+            String message = "Kamu bertemu dengan " + npc.type + " ("+npc.getGifSprite().getDescription()+")!\nApa yang akan kamu lakukan?";
+            if (npc.getGifSprite() != null && npc.getGifSprite().getDescription() != null) {
+                message = "Kamu bertemu dengan " + npc.type + "!\nApa yang akan kamu lakukan?";
+            } else {
+                message = "Kamu bertemu dengan " + npc.type + "!\nApa yang akan kamu lakukan?";
+            }
 
 
             int choice = JOptionPane.showOptionDialog(
-                    MapLoader.this, // Parent component
-                    message,
-                    "Pertemuan Pokémon!",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.QUESTION_MESSAGE,
-                    null, // Icon (bisa null atau gunakan sprite NPC jika ingin)
-                    options,
-                    options[0] // Pilihan default
-            );
-
-            // Kembalikan status tombol jika perlu (opsional, tergantung desain)
-            // Atau biarkan false agar player harus menekan ulang
-
+                    MapLoader.this, message, "Pertemuan Pokémon!",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE,
+                    null, options, options[0]);
             handleDialogChoice(choice, npc);
         });
     }
 
     private void handleDialogChoice(int choice, PokemonNPC encounteredNpc) {
-        if (choice == JOptionPane.YES_OPTION) { // Pilihan "Lawan"
+        if (choice == JOptionPane.YES_OPTION) {
             System.out.println("Kamu memilih LAWAN " + encounteredNpc.type + "!");
-            // TODO: Implementasikan logika pertarungan di sini
-            // Untuk sekarang, kita hapus NPC seolah-olah telah dikalahkan
-//            if (encounteredNpc != null) {
-//                npcs.remove(encounteredNpc);
-//            }
-//            System.out.println(encounteredNpc.type + " telah dikalahkan (dihapus).");
-            gameThread = null;
-            ShowcaseScreen showcaseScreen = new ShowcaseScreen(gameWindow);
-            gameWindow.switchPanel(showcaseScreen);
+            if (gameWindow != null && gameWindow.isDisplayable()) {
+                gameThread = null;
+                // Asumsi ada kelas ShowcaseScreen dan metode switchPanel di GameWindow
+                ShowcaseScreen showcaseScreen = new ShowcaseScreen(gameWindow);
+                gameWindow.switchPanel(showcaseScreen);
+                JOptionPane.showMessageDialog(this, "Pertarungan dengan " + encounteredNpc.type + " dimulai! (Logika belum diimplementasi)");
+                // Untuk sekarang, kita hanya tutup dialog dan lanjutkan
+                isDialogActive = false;
+                currentlyInteractingNPC = null;
+                MapLoader.this.requestFocusInWindow();
 
-        } else if (choice == JOptionPane.NO_OPTION) { // Pilihan "Menghindar"
-            System.out.println("Kamu memilih MENGHINDAR dari " + encounteredNpc.type + "!");
-            // TODO: Implementasikan logika menghindar (misalnya, player mundur sedikit)
-            // Untuk sekarang, player hanya melanjutkan.
-            // Contoh sederhana: mundurkan player sedikit dari arah dia datang
-            int pushBackDistance = TILE_SIZE / 2;
-            switch(playerDirection) { // Mundur berlawanan arah terakhir player
-                case UP: playerY += pushBackDistance; break;
-                case DOWN: playerY -= pushBackDistance; break;
-                case LEFT: playerX += pushBackDistance; break;
-                case RIGHT: playerX -= pushBackDistance; break;
+
+            } else {
+                System.err.println("GameWindow tidak valid untuk switch panel.");
+                isDialogActive = false; // Reset dialog jika gagal switch
+                currentlyInteractingNPC = null;
             }
-            // Pastikan player tetap dalam batas peta setelah mundur
-            playerX = Math.max(0, Math.min(playerX, getWidth() - displayPlayerWidth));
-            playerY = Math.max(0, Math.min(playerY, getHeight() - displayPlayerHeight));
-
-
-        } else { // Jika dialog ditutup (misalnya menekan tombol close window)
+        } else if (choice == JOptionPane.NO_OPTION) {
+            System.out.println("Kamu memilih MENGHINDAR dari " + encounteredNpc.type + "!");
+            double pushBackLogicalDistance = 0.5;
+            switch (playerDirection) {
+                case UP: playerLogicalY += pushBackLogicalDistance; break;
+                case DOWN: playerLogicalY -= pushBackLogicalDistance; break;
+                case LEFT: playerLogicalX += pushBackLogicalDistance; break;
+                case RIGHT: playerLogicalX -= pushBackLogicalDistance; break;
+            }
+            double playerLogicalHalfWidth = (currentTileSizeW > 0) ? (displayPlayerWidth / 2.0) / currentTileSizeW : 0;
+            double playerLogicalHalfHeight = (currentTileSizeH > 0) ? (displayPlayerHeight / 2.0) / currentTileSizeH : 0;
+            playerLogicalX = Math.max(playerLogicalHalfWidth, Math.min(playerLogicalX, TARGET_VISIBLE_COLUMNS - playerLogicalHalfWidth));
+            playerLogicalY = Math.max(playerLogicalHalfHeight, Math.min(playerLogicalY, TARGET_VISIBLE_ROWS - playerLogicalHalfHeight));
+            updatePlayerRenderPosition();
+            isDialogActive = false;
+            currentlyInteractingNPC = null;
+        } else {
             System.out.println("Pertemuan dengan " + encounteredNpc.type + " dibatalkan.");
-            // Mungkin perlu logika serupa dengan "Menghindar" jika dialog ditutup paksa
+            isDialogActive = false;
+            currentlyInteractingNPC = null;
         }
-
-        currentlyInteractingNPC = null; // Tidak ada NPC yang diajak interaksi lagi
-        isDialogActive = false;         // Aktifkan kembali logika game
-
-        // Penting: Kembalikan fokus ke GamePanel agar bisa menerima input keyboard lagi
         MapLoader.this.requestFocusInWindow();
     }
 
-    // Method baru untuk membuat player tampak diam saat dialog aktif
     private void setPlayerToStandingFrame() {
-        if (playerDownFrames[0] == null) return; // Pastikan sprite sudah dimuat
-
-        animationFrameIndex = 0; // Selalu frame pertama (berdiri)
-        // Update sprite berdasarkan arah terakhir player
+        if (playerDownFrames[0] == null && playerUpFrames[0] == null && playerLeftFrames[0] == null && playerRightFrames[0] == null) return;
+        animationFrameIndex = 0;
         updateCurrentPlayerSprite();
     }
 
-    // Method baru untuk mengupdate sprite player (dipanggil dari update() dan setPlayerToStandingFrame())
     private void updateCurrentPlayerSprite() {
-        BufferedImage targetSprite = null;
-        switch (playerDirection) {
-            case UP:
-                targetSprite = (playerUpFrames != null && playerUpFrames.length > animationFrameIndex && playerUpFrames[animationFrameIndex] != null) ? playerUpFrames[animationFrameIndex] : null;
-                break;
-            case DOWN:
-                targetSprite = (playerDownFrames != null && playerDownFrames.length > animationFrameIndex && playerDownFrames[animationFrameIndex] != null) ? playerDownFrames[animationFrameIndex] : null;
-                break;
-            case LEFT:
-                targetSprite = (playerLeftFrames != null && playerLeftFrames.length > animationFrameIndex && playerLeftFrames[animationFrameIndex] != null) ? playerLeftFrames[animationFrameIndex] : null;
-                break;
-            case RIGHT:
-                targetSprite = (playerRightFrames != null && playerRightFrames.length > animationFrameIndex && playerRightFrames[animationFrameIndex] != null) ? playerRightFrames[animationFrameIndex] : null;
-                break;
-        }
+        BufferedImage[] currentFrames = switch (playerDirection) {
+            case UP -> playerUpFrames;
+            case DOWN -> playerDownFrames;
+            case LEFT -> playerLeftFrames;
+            case RIGHT -> playerRightFrames;
+        };
 
-        if (targetSprite != null) {
-            currentPlayerSprite = targetSprite;
-        } else if (playerDownFrames != null && playerDownFrames.length > 0 && playerDownFrames[0] != null) {
-            currentPlayerSprite = playerDownFrames[0]; // Fallback umum
+        if (currentFrames != null && animationFrameIndex < currentFrames.length && currentFrames[animationFrameIndex] != null) {
+            currentPlayerSprite = currentFrames[animationFrameIndex];
+        } else if (currentFrames != null && currentFrames.length > 0 && currentFrames[0] != null) {
+            currentPlayerSprite = currentFrames[0];
+        } else if (playerDownFrames[0] != null) {
+            currentPlayerSprite = playerDownFrames[0];
+        } else {
+            if (displayPlayerWidth > 0 && displayPlayerHeight > 0) {
+                currentPlayerSprite = new BufferedImage(displayPlayerWidth, displayPlayerHeight, BufferedImage.TYPE_INT_ARGB);
+                Graphics g = currentPlayerSprite.getGraphics();
+                g.setColor(Color.MAGENTA);
+                g.fillRect(0, 0, displayPlayerWidth, displayPlayerHeight);
+                g.dispose();
+            } else {
+                currentPlayerSprite = new BufferedImage(1,1, BufferedImage.TYPE_INT_ARGB);
+            }
         }
     }
 
@@ -422,57 +469,58 @@ public class MapLoader extends JPanel implements Runnable {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        // g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-        // 1. Gambar Map
-        if (grassTile != null) {
-            for (int row = 0; row < MAP_ROWS; row++) {
-                for (int col = 0; col < MAP_COLUMNS; col++) {
-                    g2d.drawImage(grassTile, col * TILE_SIZE, row * TILE_SIZE, TILE_SIZE, TILE_SIZE, null);
+        if (grassTile != null && currentTileSizeW > 0 && currentTileSizeH > 0) {
+            for (int row = 0; row < TARGET_VISIBLE_ROWS; row++) {
+                for (int col = 0; col < TARGET_VISIBLE_COLUMNS; col++) {
+                    g2d.drawImage(grassTile,
+                            (int) (col * currentTileSizeW),
+                            (int) (row * currentTileSizeH),
+                            (int) Math.ceil(currentTileSizeW),
+                            (int) Math.ceil(currentTileSizeH),
+                            null);
                 }
             }
         }
 
-        // 2. Gambar NPCs (gambar NPC sebelum player agar player tampak di atas NPC jika overlap)
-        // Atau gambar player dulu jika ingin NPC di atas player. Sesuaikan urutannya.
         if (npcs != null) {
             for (PokemonNPC npc : npcs) {
-                if (npc.sprite != null) {
-                    g2d.drawImage(npc.sprite, npc.x, npc.y, npc.displayWidth, npc.displayHeight, null);
+                ImageIcon npcIcon = npc.getGifSprite();
+                if (npcIcon != null) {
+                    g2d.drawImage(npcIcon.getImage(),
+                            npc.renderX,
+                            npc.renderY,
+                            npc.displayWidth,
+                            npc.displayHeight,
+                            this); // 'this' adalah ImageObserver
                 }
             }
         }
 
-        // 3. Gambar Player
-        if (currentPlayerSprite != null) {
-            g2d.drawImage(currentPlayerSprite, playerX, playerY, displayPlayerWidth, displayPlayerHeight, null);
+        if (currentPlayerSprite != null && displayPlayerWidth > 0 && displayPlayerHeight > 0) {
+            if (playerRenderX == 0 && playerRenderY == 0 && (playerLogicalX != 0 || playerLogicalY != 0) && currentTileSizeW > 0) {
+                updatePlayerRenderPosition(); // Coba update lagi jika belum pas
+            }
+            g2d.drawImage(currentPlayerSprite, playerRenderX, playerRenderY, displayPlayerWidth, displayPlayerHeight, null);
+        } else if (currentPlayerSprite == null) {
+            System.err.println("currentPlayerSprite is null in paintComponent.");
         }
-        g2d.dispose();
+        // g2d.dispose(); // Umumnya tidak perlu untuk Graphics dari parameter paintComponent
     }
 
-    // PlayerKeyAdapter tetap sama
     private class PlayerKeyAdapter extends KeyAdapter {
-        // ... (kode KeyAdapter tetap sama) ...
         @Override
         public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
+            if (isDialogActive) return;
+
             switch (key) {
-                case KeyEvent.VK_W:
-                case KeyEvent.VK_UP:
-                    upPressed = true;
-                    break;
-                case KeyEvent.VK_S:
-                case KeyEvent.VK_DOWN:
-                    downPressed = true;
-                    break;
-                case KeyEvent.VK_A:
-                case KeyEvent.VK_LEFT:
-                    leftPressed = true;
-                    break;
-                case KeyEvent.VK_D:
-                case KeyEvent.VK_RIGHT:
-                    rightPressed = true;
-                    break;
+                case KeyEvent.VK_W: case KeyEvent.VK_UP: upPressed = true; break;
+                case KeyEvent.VK_S: case KeyEvent.VK_DOWN: downPressed = true; break;
+                case KeyEvent.VK_A: case KeyEvent.VK_LEFT: leftPressed = true; break;
+                case KeyEvent.VK_D: case KeyEvent.VK_RIGHT: rightPressed = true; break;
             }
         }
 
@@ -480,24 +528,56 @@ public class MapLoader extends JPanel implements Runnable {
         public void keyReleased(KeyEvent e) {
             int key = e.getKeyCode();
             switch (key) {
-                case KeyEvent.VK_W:
-                case KeyEvent.VK_UP:
-                    upPressed = false;
-                    break;
-                case KeyEvent.VK_S:
-                case KeyEvent.VK_DOWN:
-                    downPressed = false;
-                    break;
-                case KeyEvent.VK_A:
-                case KeyEvent.VK_LEFT:
-                    leftPressed = false;
-                    break;
-                case KeyEvent.VK_D:
-                case KeyEvent.VK_RIGHT:
-                    rightPressed = false;
-                    break;
+                case KeyEvent.VK_W: case KeyEvent.VK_UP: upPressed = false; break;
+                case KeyEvent.VK_S: case KeyEvent.VK_DOWN: downPressed = false; break;
+                case KeyEvent.VK_A: case KeyEvent.VK_LEFT: leftPressed = false; break;
+                case KeyEvent.VK_D: case KeyEvent.VK_RIGHT: rightPressed = false; break;
             }
         }
     }
-    // enum Direction { UP, DOWN, LEFT, RIGHT } // Pastikan class/enum Direction ada
+
+    // Anda mungkin memerlukan kelas GameWindow dan ShowcaseScreen seperti ini (sangat sederhana):
+    /*
+    static class GameWindow extends JFrame {
+        public GameWindow() {
+            setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            setTitle("Game Map Loader");
+            MapLoader mapLoader = new MapLoader(this);
+            add(mapLoader, BorderLayout.CENTER);
+            setPreferredSize(new Dimension(800, 600));
+            pack();
+            setLocationRelativeTo(null);
+            setVisible(true);
+            mapLoader.startGameThread();
+        }
+
+        public void switchPanel(JPanel panel) {
+            // Logika untuk mengganti panel
+            System.out.println("Switching panel to: " + panel.getClass().getSimpleName());
+            getContentPane().removeAll();
+            getContentPane().add(panel, BorderLayout.CENTER);
+            revalidate();
+            repaint();
+            panel.requestFocusInWindow();
+        }
+
+        public static void main(String[] args) {
+            SwingUtilities.invokeLater(GameWindow::new);
+        }
+    }
+
+    static class ShowcaseScreen extends JPanel {
+        public ShowcaseScreen(GameWindow gw, String pokemonName) {
+            JLabel label = new JLabel("Showcase/Battle with: " + pokemonName);
+            add(label);
+            JButton backButton = new JButton("Back to Map");
+            backButton.addActionListener(e -> {
+                MapLoader newMapLoader = new MapLoader(gw);
+                gw.switchPanel(newMapLoader);
+                newMapLoader.startGameThread();
+            });
+            add(backButton);
+        }
+    }
+    */
 }

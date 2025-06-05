@@ -40,6 +40,7 @@ public class ShowcaseScreen extends JPanel {
     private static final int LANJUT_BUTTON_MARGIN_RIGHT = 40;
     private static final int LANJUT_BUTTON_MARGIN_BOTTOM = 30;
 
+    private Pokemon pokemon;
 
     public ShowcaseScreen(GameWindow window) {
         this.gameWindow = window;
@@ -103,7 +104,7 @@ public class ShowcaseScreen extends JPanel {
                 public void actionPerformed(ActionEvent e) {
                     System.out.println("Tombol LANJUT diklik!");
                     if (gameWindow != null) {
-                        PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow);
+                        PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow, pokemon);
                         gameWindow.switchPanel(pokemonBattleUI);
                         // Aksi selanjutnya, misalnya berpindah ke layar pemilihan karakter atau battle
                         // gameWindow.showCharacterSelectionScreen();

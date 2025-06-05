@@ -49,7 +49,7 @@ public class Pokemon {
         return defense;
     }
 
-    public List<Move> getMoves() {
+    public ArrayList<Move> getMoves() {
         return moves;
     }
 

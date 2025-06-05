@@ -1,15 +1,22 @@
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.List;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
-public class PokemonSelectionUI {
+public class PokemonSelectionUI extends JPanel {
     private JFrame frame;
-    public PokemonSelectionUI() {
+    private GameWindow gameWindow;
+
+    private Pokemon selectedPokemon;
+    public PokemonSelectionUI(GameWindow gameWindow) {
+        this.gameWindow = gameWindow;
         frame = new JFrame("Pilih Pokémon");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(950, 400);
+        frame.setSize(950, 500);
         frame.setLocationRelativeTo(null);
 
         // Panel utama horizontal
@@ -17,6 +24,24 @@ public class PokemonSelectionUI {
         mainPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 20));
         mainPanel.setBackground(Color.WHITE);
         mainPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JButton lanjutBtn = new JButton("Lanjut");
+
+        lanjutBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e){
+                if (selectedPokemon != null) {
+                    PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow, selectedPokemon);
+                    gameWindow.switchPanel(pokemonBattleUI);
+                    frame.dispose();
+                }
+
+                else {
+                    JOptionPane.showMessageDialog(frame, "Pilih pokemon dulu !", "Pilih pokemon", JOptionPane.INFORMATION_MESSAGE);
+                }
+            }
+        });
+
+
 
         // Dataset Pokémon
        ArrayList<Pokemon> pokemonList = GetPokemon.all();
@@ -27,11 +52,16 @@ public class PokemonSelectionUI {
             mainPanel.add(card);
         }
 
+        mainPanel.add(lanjutBtn);
+
         JScrollPane scrollPane = new JScrollPane(mainPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setBorder(null);
 
+
+
         frame.add(scrollPane);
+
         frame.setVisible(true);
     }
 
@@ -56,6 +86,8 @@ public class PokemonSelectionUI {
         ImageIcon pokemonImg = loadPokemonImage(p.getName());
         JLabel imageLabel = new JLabel(pokemonImg);
         imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+
 
         topPanel.add(nameLabel);
         topPanel.add(Box.createVerticalStrut(5));
@@ -106,6 +138,34 @@ public class PokemonSelectionUI {
         panel.add(movesLabel);
         panel.add(moveScroll);
 
+        panel.addMouseListener(new MouseAdapter() {
+            private final Color originalBackground = panel.getBackground();
+            private final Color hoverBackground = new Color(220, 220, 220); // Warna sedikit lebih gelap saat hover
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                // Aksi yang ingin dilakukan ketika panel diklik
+                System.out.println("Pokémon yang dipilih: " + p.getName());
+                selectedPokemon = p;
+//                JOptionPane.showMessageDialog(frame, "Kamu memilih: " + p.getName(), "Pokémon Terpilih", JOptionPane.INFORMATION_MESSAGE);
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // Aksi saat mouse masuk ke area panel (efek hover)
+                panel.setBackground(hoverBackground); // Ubah warna latar saat hover
+                panel.setCursor(new Cursor(Cursor.HAND_CURSOR)); // Ubah kursor menjadi tangan
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // Aksi saat mouse keluar dari area panel
+                panel.setBackground(originalBackground); // Kembalikan warna latar asli
+                panel.setCursor(new Cursor(Cursor.DEFAULT_CURSOR)); // Kembalikan kursor default
+            }
+        });
+
         return panel;
     }
 
@@ -123,7 +183,10 @@ public class PokemonSelectionUI {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(PokemonSelectionUI::new);
+        SwingUtilities.invokeLater(() -> {
+            PokemonSelectionUI game = new PokemonSelectionUI(new GameWindow());
+            game.setVisible(true);
+        });
     }
 }
 
