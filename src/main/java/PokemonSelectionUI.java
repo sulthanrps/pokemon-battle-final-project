@@ -26,20 +26,20 @@ public class PokemonSelectionUI extends JPanel {
         mainPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
         JButton lanjutBtn = new JButton("Lanjut");
 
-        lanjutBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e){
-                if (selectedPokemon != null) {
-                    PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow, selectedPokemon);
-                    gameWindow.switchPanel(pokemonBattleUI);
-                    frame.dispose();
-                }
-
-                else {
-                    JOptionPane.showMessageDialog(frame, "Pilih pokemon dulu !", "Pilih pokemon", JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        });
+//        lanjutBtn.addActionListener(new ActionListener() {
+//            @Override
+//            public void actionPerformed(ActionEvent e){
+//                if (selectedPokemon != null) {
+//                    PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow, selectedPokemon);
+//                    gameWindow.switchPanel(pokemonBattleUI);
+//                    frame.dispose();
+//                }
+//
+//                else {
+//                    JOptionPane.showMessageDialog(frame, "Pilih pokemon dulu !", "Pilih pokemon", JOptionPane.INFORMATION_MESSAGE);
+//                }
+//            }
+//        });
 
 
 

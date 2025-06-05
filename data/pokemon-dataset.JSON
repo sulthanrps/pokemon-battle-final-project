@@ -1,0 +1,89 @@
+[
+    {
+        "defense": 75,
+        "attack": 130,
+        "moves": [
+            {
+                "name": "Thunderbolt",
+                "power": 90,
+                "type": "Electric"
+            },
+            {
+                "name": "Quick Attack",
+                "power": 40,
+                "type": "Normal"
+            },
+            {
+                "name": "Tackle",
+                "power": 20,
+                "type": "Normal"
+            },
+            {
+                "name": "Electro Ball",
+                "power": 60,
+                "type": "Electric"
+            }
+        ],
+        "name": "Pikachu",
+        "health": 0,
+        "type": "Electric"
+    },
+    {
+        "defense": 80,
+        "attack": 100,
+        "moves": [
+            {
+                "name": "Flamethrower",
+                "power": 90,
+                "type": "Fire"
+            },
+            {
+                "name": "Scratch",
+                "power": 20,
+                "type": "Normal"
+            },
+            {
+                "name": "Tackle",
+                "power": 20,
+                "type": "Normal"
+            },
+            {
+                "name": "Heat Wave",
+                "power": 95,
+                "type": "Fire"
+            }
+        ],
+        "name": "Charizard",
+        "health": 100,
+        "type": "Fire"
+    },
+    {
+        "defense": 150,
+        "attack": 170,
+        "moves": [
+            {
+                "name": "Hyper Beam",
+                "power": 150,
+                "type": "Normal"
+            },
+            {
+                "name": "Judgement",
+                "power": 100,
+                "type": "Normal"
+            },
+            {
+                "name": "Giga Impact",
+                "power": 150,
+                "type": "Normal"
+            },
+            {
+                "name": "Hyper Voice",
+                "power": 90,
+                "type": "Normal"
+            }
+        ],
+        "name": "Arceus",
+        "health": 147,
+        "type": "Normal"
+    }
+]

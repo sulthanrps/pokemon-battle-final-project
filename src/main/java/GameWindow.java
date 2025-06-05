@@ -18,7 +18,6 @@ public class GameWindow extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         playBackgroundMusic(BACKGROUND_MUSIC_PATH);
-//        setSize(700, 600);
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         OnboardingScreen onboardingScreen = new OnboardingScreen(this);
@@ -80,10 +79,6 @@ public class GameWindow extends JFrame {
 
         contentPane.removeAll();
 
-//        if(currentPanel != null){
-//            contentPane.remove(currentPanel);
-//        }
-
         currentPanel = newPanel;
         contentPane.add(currentPanel, BorderLayout.CENTER);
 
@@ -100,6 +95,5 @@ public class GameWindow extends JFrame {
     public void startGame() {
         MapLoader mapLoaderPanel = new MapLoader(this);
         switchPanel(mapLoaderPanel);
-        mapLoaderPanel.startGameThread();
     }
 }

@@ -11,9 +11,8 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 
 public class MapLoader extends JPanel implements Runnable {
 
@@ -73,6 +72,13 @@ public class MapLoader extends JPanel implements Runnable {
 
     enum Direction {UP, DOWN, LEFT, RIGHT}
 
+    private static final Map<String, Pokemon> npcPokemons = new HashMap<>();
+    static {
+        npcPokemons.put("Electivire", new Pokemon("Electivire", Type.ELECTRIC, 130, 100, 70));
+        npcPokemons.put("Infernape", new Pokemon("Infernape", Type.FIRE, 110, 110, 60));
+        npcPokemons.put("Turtwig", new Pokemon("Turtwig", Type.GRASS, 90, 60, 50));
+    }
+
     private static class PokemonNPC {
         double logicalX, logicalY;
         int renderX, renderY;
@@ -121,6 +127,7 @@ public class MapLoader extends JPanel implements Runnable {
     }
 
     public MapLoader(GameWindow gameWindow) {
+        startGameThread();
         this.gameWindow = gameWindow;
         setBackground(Color.BLACK);
         setDoubleBuffered(true);
@@ -392,10 +399,11 @@ public class MapLoader extends JPanel implements Runnable {
             System.out.println("Kamu memilih LAWAN " + encounteredNpc.type + "!");
             if (gameWindow != null && gameWindow.isDisplayable()) {
                 gameThread = null;
+                System.out.println(encounteredNpc.type + " >>> type NPC");
                 // Asumsi ada kelas ShowcaseScreen dan metode switchPanel di GameWindow
-                ShowcaseScreen showcaseScreen = new ShowcaseScreen(gameWindow);
+                ShowcaseScreen showcaseScreen = new ShowcaseScreen(gameWindow, npcPokemons.get(encounteredNpc.type));
                 gameWindow.switchPanel(showcaseScreen);
-                JOptionPane.showMessageDialog(this, "Pertarungan dengan " + encounteredNpc.type + " dimulai! (Logika belum diimplementasi)");
+//                JOptionPane.showMessageDialog(this, "Pertarungan dengan " + encounteredNpc.type + " dimulai! (Logika belum diimplementasi)");
                 // Untuk sekarang, kita hanya tutup dialog dan lanjutkan
                 isDialogActive = false;
                 currentlyInteractingNPC = null;
@@ -409,7 +417,7 @@ public class MapLoader extends JPanel implements Runnable {
             }
         } else if (choice == JOptionPane.NO_OPTION) {
             System.out.println("Kamu memilih MENGHINDAR dari " + encounteredNpc.type + "!");
-            double pushBackLogicalDistance = 0.5;
+            double pushBackLogicalDistance = 1;
             switch (playerDirection) {
                 case UP: playerLogicalY += pushBackLogicalDistance; break;
                 case DOWN: playerLogicalY -= pushBackLogicalDistance; break;

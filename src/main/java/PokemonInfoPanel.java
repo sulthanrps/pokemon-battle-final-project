@@ -4,8 +4,11 @@ import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.awt.event.MouseAdapter; // Import MouseAdapter
+import java.awt.event.MouseEvent;
 
 public class PokemonInfoPanel extends JPanel {
+    public static Pokemon selectedPokemon;
     private Pokemon pokemon;
     private BufferedImage originalCardFrameImage;
     private BufferedImage scaledCardFrameImage;
@@ -60,10 +63,10 @@ public class PokemonInfoPanel extends JPanel {
     private static final float CARD_STAT_FONT_SIZE = 18f;
 
     public PokemonInfoPanel(Pokemon pokemon) {
-        this.pokemon = pokemon;
         this.originalCardFrameImage = ImageLoader.loadImage(CARD_FRAME_PATH);
         setLayout(null);
         setOpaque(false);
+        this.pokemon = pokemon;
 
         if (this.originalCardFrameImage != null) {
             Image tempScaledFrame = originalCardFrameImage.getScaledInstance(TARGET_CARD_WIDTH, TARGET_CARD_HEIGHT, Image.SCALE_SMOOTH);
@@ -117,7 +120,52 @@ public class PokemonInfoPanel extends JPanel {
             System.err.println("Path GIF untuk " + pokemon.getName() + " tidak ada di map pokemonGifPaths.");
             addPlaceholderGifLabel("No GIF", 0, 0);
         }
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if(pokemon.getHealth() > 0){
+                    selectedPokemon = pokemon;
+                }
+
+                else {
+                    int choice = JOptionPane.showOptionDialog(
+                            PokemonInfoPanel.this,
+                            "HP Pokemon anda sudah mencapai 0 !, tekan YES jika ingin merestore HP kembali !",
+                            "Pokemon Revival",
+                            JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new String[]{"REVIVE", "REST"}, "REVIVE");
+                    revivePokemon(choice);
+                }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // Aksi saat mouse masuk ke area panel (efek hover)
+                setBackground(new Color(220, 220, 220)); // Ubah warna latar saat hover
+                setCursor(new Cursor(Cursor.HAND_CURSOR)); // Ubah kursor menjadi tangan
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // Aksi saat mouse keluar dari area panel
+                setBackground(getBackground()); // Kembalikan warna latar asli
+                setCursor(new Cursor(Cursor.DEFAULT_CURSOR)); // Kembalikan kursor default
+            }
+        });
     }
+
+    private void revivePokemon(int choice) {
+        if(choice == JOptionPane.YES_OPTION){
+            pokemon.setHealth(100);
+            GetPokemon.updatePokemon(pokemon);
+            repaint();
+            revalidate();
+        }
+    }
+
+    // MASIH HARUS DI COBA" INI REVIVE POKEMON
+
+
 
     private void addPlaceholderGifLabel(String message, int x, int y) {
         if (pokemonGifLabel == null) {

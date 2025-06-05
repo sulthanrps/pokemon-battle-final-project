@@ -32,7 +32,7 @@ public class PokemonBattleUI extends JPanel {
     private JProgressBar enemyHealthBar;
     private JPanel mainPanel;
 
-    private int playerCurrentHP = 100; // Sesuaikan dengan HP awal di target
+    private int playerCurrentHP; // Sesuaikan dengan HP awal di target
     private int enemyCurrentHP = 100;  // Sesuaikan dengan HP awal di target
     private final int MAX_HP = 100;
 
@@ -67,12 +67,12 @@ public class PokemonBattleUI extends JPanel {
         }
     }
 
-    public PokemonBattleUI(GameWindow gameWindow, Pokemon pokemon) {
+    public PokemonBattleUI(GameWindow gameWindow, Pokemon pokemon, Pokemon enemy) {
         this.gameWindow = gameWindow;
         pokemonPlayer = pokemon;
+        pokemonEnemy = enemy;
 
-        // enemy pokemon
-        pokemonEnemy = new Pokemon("Electrivire", Type.ELECTRIC, 100, 125, 67, new ArrayList<>());
+        playerCurrentHP = pokemonPlayer.getHealth();
 
         SwingUtilities.invokeLater(() -> {
             window = new JFrame("Pokemon Battle");
@@ -115,7 +115,7 @@ public class PokemonBattleUI extends JPanel {
             mainPanel.add(statusTextPanel, gbc);
 
             // --- Panel Musuh (Kanan Atas) ---
-            JPanel enemyPanel = createCharacterPanel("ELECTIVIRE", true);
+            JPanel enemyPanel = createCharacterPanel(pokemonEnemy.getName().toUpperCase(), true);
             enemyPanel.setOpaque(false);
             gbc.gridx = 1;
             gbc.gridy = 0;
@@ -127,7 +127,7 @@ public class PokemonBattleUI extends JPanel {
             mainPanel.add(enemyPanel, gbc);
 
             // --- Panel Pemain (Kiri Bawah) ---
-            JPanel playerPanel = createCharacterPanel(pokemonPlayer.getName(), false);
+            JPanel playerPanel = createCharacterPanel(pokemonPlayer.getName().toUpperCase(), false);
             playerPanel.setOpaque(false);
             gbc.gridx = 0;
             gbc.gridy = 2;
@@ -141,9 +141,6 @@ public class PokemonBattleUI extends JPanel {
             // --- Panel Tombol Aksi (Bawah Tengah) ---
             JPanel actionPanel = new JPanel(new GridLayout(2, 2, 10, 10)); // Spasi antar tombol disesuaikan
             actionPanel.setOpaque(false);
-            // actionPanel.setBorder(new EmptyBorder(0, 0, 10, 0)); // Dihapus agar lebih fleksibel dengan anchor SOUTH
-
-            String[] attackNames = {"THUNDER", "IRON TAIL", "ELECTRO BALL", "QUICK ATTACK"};
 
             ArrayList<Move> moves = pokemonPlayer.getMoves();
             for (Move move : moves) {
@@ -208,7 +205,7 @@ public class PokemonBattleUI extends JPanel {
         // Ukuran container disesuaikan agar pokemon dan teratai pas
         JLabel pokemonSpriteLabel = new JLabel();
         pokemonSpriteLabel.setOpaque(false);
-        String spritePath = isEnemy ? "/Assets/Pokemons/electivire.gif" : "/Assets/Pokemons/" + pokemonPlayer.getName().toLowerCase() + "-playable.gif";
+        String spritePath = isEnemy ? "/Assets/Pokemons/" + pokemonEnemy.getName().toLowerCase() + ".gif" : "/Assets/Pokemons/" + pokemonPlayer.getName().toLowerCase() + "-playable.gif";
         URL imageUrl = getClass().getResource(spritePath);
         ImageIcon pokemonIcon = null;
 
@@ -349,8 +346,9 @@ public class PokemonBattleUI extends JPanel {
                 if (enemyCurrentHP < 0) enemyCurrentHP = 0;
 
                 if (enemyCurrentHP > 0) {
-                    int damageToPlayer = (int) (Math.random() * 5) + 5; // Antara 5 dan 15
+                    int damageToPlayer = (int) (Math.random() * 5) + (int)(pokemonEnemy.getAttack() / 10);
                     playerCurrentHP -= damageToPlayer;
+                    pokemonPlayer.setHealth(pokemonPlayer.getHealth() - damageToPlayer);
                     if (playerCurrentHP < 0) playerCurrentHP = 0;
                 }
                 updateHealthBars();
@@ -429,6 +427,10 @@ public class PokemonBattleUI extends JPanel {
                 }
             }
             JOptionPane.showMessageDialog(this, message1, "Permainan Selesai", JOptionPane.INFORMATION_MESSAGE);
+            GetPokemon.updatePokemon(pokemonPlayer);
+            MapLoader mapLoader = new MapLoader(gameWindow);
+            gameWindow.switchPanel(mapLoader);
+            window.dispose();
         }
     }
 

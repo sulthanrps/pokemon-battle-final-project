@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.List;
 
 public class Pokemon {
     private String name;
@@ -24,6 +23,16 @@ public class Pokemon {
 
     }
 
+    public Pokemon(String name, Type type, int health, int attack, int defense) {
+        this.name = name;
+        this.type = type;
+        this.health = health;
+        this.maxHealth = health;
+        this.attack = attack;
+        this.defense = defense;
+        this.moves = new ArrayList<>();
+    }
+
     // ***Getters and Setters (Crucial!)***
     public String getName() {
         return name;
@@ -34,11 +43,18 @@ public class Pokemon {
     }
 
     public int getHealth() {
+        if(health < 0) {
+            health = 0;
+        }
         return health;
     }
 
     public void setHealth(int health) { // Setter for health (needed for healing)
         this.health = health;
+    }
+
+    public void revivePokemon() {
+        this.health = this.maxHealth;
     }
 
     public int getMaxHealth() {

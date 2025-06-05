@@ -41,7 +41,8 @@ public class ShowcaseScreen extends JPanel {
     private static final int LANJUT_BUTTON_MARGIN_BOTTOM = 70;
 
 
-    public ShowcaseScreen(GameWindow window) {
+    public ShowcaseScreen(GameWindow window, Pokemon enemyPokemon) {
+        System.out.println(enemyPokemon + "<<< enemy");
         this.gameWindow = window;
         setLayout(null);
         backgroundImage = ImageLoader.loadImage(BACKGROUND_IMG_PATH);
@@ -103,14 +104,9 @@ public class ShowcaseScreen extends JPanel {
                 public void actionPerformed(ActionEvent e) {
                     System.out.println("Tombol LANJUT diklik!");
                     if (gameWindow != null) {
-                        PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow, new Pokemon());
+                        System.out.println(PokemonInfoPanel.selectedPokemon + "<<< player");
+                        PokemonBattleUI pokemonBattleUI = new PokemonBattleUI(gameWindow, PokemonInfoPanel.selectedPokemon, enemyPokemon);
                         gameWindow.switchPanel(pokemonBattleUI);
-                        // Aksi selanjutnya, misalnya berpindah ke layar pemilihan karakter atau battle
-                        // gameWindow.showCharacterSelectionScreen();
-//                        JOptionPane.showMessageDialog(gameWindow,
-//                                "Tombol LANJUT diklik! Fitur selanjutnya belum ada.",
-//                                "Info Showcase",
-//                                JOptionPane.INFORMATION_MESSAGE);
                     }
                 }
             });
