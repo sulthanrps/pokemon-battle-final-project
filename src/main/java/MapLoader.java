@@ -33,13 +33,13 @@ public class MapLoader extends JPanel implements Runnable {
 
     private GameWindow gameWindow; // Asumsi ada kelas GameWindow
     private BufferedImage grassTile;
-
     // --- Variabel Animasi Player ---
     private BufferedImage[] playerUpFrames = new BufferedImage[2];
     private BufferedImage[] playerDownFrames = new BufferedImage[2];
     private BufferedImage[] playerLeftFrames = new BufferedImage[2];
     private BufferedImage[] playerRightFrames = new BufferedImage[2];
     private BufferedImage currentPlayerSprite;
+
     private int animationFrameIndex = 0;
     private int animationCounter = 0;
     private static final int ANIMATION_SPEED = 5;
@@ -48,11 +48,11 @@ public class MapLoader extends JPanel implements Runnable {
     private double playerLogicalX, playerLogicalY;
     private int playerRenderX, playerRenderY;
     private Direction playerDirection = Direction.DOWN;
-
     private boolean upPressed, downPressed, leftPressed, rightPressed;
 
     // --- KONFIGURASI & VARIABEL NPC ---
     private List<PokemonNPC> npcs;
+
     private ImageIcon turtwigGif, electivireGif, infernapeGif; // Untuk GIF NPC
 
     // Jumlah NPC baru
@@ -66,9 +66,22 @@ public class MapLoader extends JPanel implements Runnable {
     private boolean isDialogActive = false;
     private PokemonNPC currentlyInteractingNPC = null;
 
+    private BufferedImage pikachuSprite, charizardSprite, greninjaSprite; // Sprite dasar NPC
+    private static final int NUM_PIKACHUS = 1;    // Jumlah Pikachu yang akan muncul
+    private static final int NUM_CHARIZARDS = 1;  // Jumlah Charizard
+    private static final int NUM_GRENINJAS = 2;   // Jumlah Greninja
+    private static final double NPC_SCALE_FACTOR = 0.3; // Skala untuk NPC (misal, 0.5x ukuran asli)
+    // Pikachu 64x64 -> 32x32 dengan skala 0.5
+    private Random randomGenerator;
+
+
+    // --- Variabel Status Interaksi NPC ---
+    private boolean isDialogActive = false;
+    private PokemonNPC currentlyInteractingNPC = null; // Menyimpan NPC yang sedang diajak interaksi
+
     private Thread gameThread;
     private final int FPS = 30;
-
+  
     enum Direction {UP, DOWN, LEFT, RIGHT}
 
     private static class PokemonNPC {
@@ -120,6 +133,7 @@ public class MapLoader extends JPanel implements Runnable {
 
     public MapLoader(GameWindow gameWindow) {
         this.gameWindow = gameWindow;
+
         setBackground(Color.BLACK);
         setDoubleBuffered(true);
         setFocusable(true);
@@ -250,7 +264,7 @@ public class MapLoader extends JPanel implements Runnable {
         leftPressed = false;
         rightPressed = false;
     }
-
+  
     private void updatePlayerRenderPosition() {
         playerRenderX = (int) (playerLogicalX * currentTileSizeW - displayPlayerWidth / 2.0);
         playerRenderY = (int) (playerLogicalY * currentTileSizeH - displayPlayerHeight / 2.0);

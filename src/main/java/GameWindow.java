@@ -3,6 +3,7 @@ import java.awt.*;
 import javax.sound.sampled.*;
 import java.io.IOException;
 import java.net.URL;
+
 public class GameWindow extends JFrame {
 
     public static final String GAME_TITLE = "Pokemon SDG'S";
@@ -15,6 +16,7 @@ public class GameWindow extends JFrame {
     public GameWindow() {
         super(GAME_TITLE);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         setLocationRelativeTo(null);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
 
@@ -23,6 +25,12 @@ public class GameWindow extends JFrame {
         add(currentPanel);
 
         playBackgroundMusic(BACKGROUND_MUSIC_PATH);
+//        setSize(700, 600);
+        setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        OnboardingScreen onboardingScreen = new OnboardingScreen(this);
+        currentPanel = onboardingScreen;
+        add(currentPanel);
 
         setVisible(true);
     }
@@ -71,21 +79,26 @@ public class GameWindow extends JFrame {
     }
 
     public void switchPanel(JPanel newPanel) {
-        if (newPanel == null) {
+        if(newPanel == null) {
             System.err.println("Error: newPanel tidak boleh null di switchPanel.");
             return;
         }
         Container contentPane = getContentPane();
+
         contentPane.removeAll();
 
+//        if(currentPanel != null){
+//            contentPane.remove(currentPanel);
+//        }
+
         currentPanel = newPanel;
-        contentPane.add(currentPanel, BorderLayout.CENTER); // Tambahkan panel baru
+        contentPane.add(currentPanel, BorderLayout.CENTER);
 
         contentPane.revalidate();
         contentPane.repaint();
 
         SwingUtilities.invokeLater(() -> {
-            if (currentPanel != null) {
+            if(currentPanel != null) {
                 currentPanel.requestFocusInWindow();
             }
         });
