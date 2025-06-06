@@ -73,6 +73,7 @@ public class MapLoader extends JPanel implements Runnable {
     enum Direction {UP, DOWN, LEFT, RIGHT}
 
     private static final Map<String, Pokemon> npcPokemons = new HashMap<>();
+
     static {
         npcPokemons.put("Electivire", new Pokemon("Electivire", Type.ELECTRIC, 130, 100, 70));
         npcPokemons.put("Infernape", new Pokemon("Infernape", Type.FIRE, 110, 110, 60));
@@ -144,6 +145,7 @@ public class MapLoader extends JPanel implements Runnable {
                 System.out.println("Panel resized to: " + getWidth() + "x" + getHeight());
                 updateGameLayoutAndElements();
             }
+
             @Override
             public void componentShown(ComponentEvent e) {
                 System.out.println("Panel shown: " + getWidth() + "x" + getHeight());
@@ -196,7 +198,7 @@ public class MapLoader extends JPanel implements Runnable {
                 System.err.println("player_down_1.png gagal dimuat, menggunakan ukuran asli default dan rasio 1:1.");
                 playerAspectRatio = 1.0;
             }
-            currentPlayerSprite = playerDownFrames[0] != null ? playerDownFrames[0] : new BufferedImage(1,1, BufferedImage.TYPE_INT_ARGB);
+            currentPlayerSprite = playerDownFrames[0] != null ? playerDownFrames[0] : new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 
             turtwigGif = loadGifIcon("/Assets/Pokemons/turtwig.gif");
             electivireGif = loadGifIcon("/Assets/Pokemons/electivire.gif");
@@ -239,10 +241,10 @@ public class MapLoader extends JPanel implements Runnable {
             npc.updateSizeAndPosition(currentTileSizeW, currentTileSizeH, NPC_SCALE_RELATIVE_TO_TILE_HEIGHT, this);
         }
 
-        System.out.println("Layout Updated. TileW: " + String.format("%.2f",currentTileSizeW) +
+        System.out.println("Layout Updated. TileW: " + String.format("%.2f", currentTileSizeW) +
                 ", TileH: " + String.format("%.2f", currentTileSizeH) +
                 ", Player Display: " + displayPlayerWidth + "x" + displayPlayerHeight +
-                ", Player Speed: " + String.format("%.2f",playerSpeed));
+                ", Player Speed: " + String.format("%.2f", playerSpeed));
         repaint();
     }
 
@@ -377,8 +379,8 @@ public class MapLoader extends JPanel implements Runnable {
 
     private void showEncounterDialog(PokemonNPC npc) {
         SwingUtilities.invokeLater(() -> {
-            String[] options = {"Lawan", "Menghindar"};
-            String message = "Kamu bertemu dengan " + npc.type + " ("+npc.getGifSprite().getDescription()+")!\nApa yang akan kamu lakukan?";
+            String[] options = {"Lawan"};
+            String message = "Kamu bertemu dengan " + npc.type + " (" + npc.getGifSprite().getDescription() + ")!\nApa yang akan kamu lakukan?";
             if (npc.getGifSprite() != null && npc.getGifSprite().getDescription() != null) {
                 message = "Kamu bertemu dengan " + npc.type + "!\nApa yang akan kamu lakukan?";
             } else {
@@ -415,22 +417,6 @@ public class MapLoader extends JPanel implements Runnable {
                 isDialogActive = false; // Reset dialog jika gagal switch
                 currentlyInteractingNPC = null;
             }
-        } else if (choice == JOptionPane.NO_OPTION) {
-            System.out.println("Kamu memilih MENGHINDAR dari " + encounteredNpc.type + "!");
-            double pushBackLogicalDistance = 1;
-            switch (playerDirection) {
-                case UP: playerLogicalY += pushBackLogicalDistance; break;
-                case DOWN: playerLogicalY -= pushBackLogicalDistance; break;
-                case LEFT: playerLogicalX += pushBackLogicalDistance; break;
-                case RIGHT: playerLogicalX -= pushBackLogicalDistance; break;
-            }
-            double playerLogicalHalfWidth = (currentTileSizeW > 0) ? (displayPlayerWidth / 2.0) / currentTileSizeW : 0;
-            double playerLogicalHalfHeight = (currentTileSizeH > 0) ? (displayPlayerHeight / 2.0) / currentTileSizeH : 0;
-            playerLogicalX = Math.max(playerLogicalHalfWidth, Math.min(playerLogicalX, TARGET_VISIBLE_COLUMNS - playerLogicalHalfWidth));
-            playerLogicalY = Math.max(playerLogicalHalfHeight, Math.min(playerLogicalY, TARGET_VISIBLE_ROWS - playerLogicalHalfHeight));
-            updatePlayerRenderPosition();
-            isDialogActive = false;
-            currentlyInteractingNPC = null;
         } else {
             System.out.println("Pertemuan dengan " + encounteredNpc.type + " dibatalkan.");
             isDialogActive = false;
@@ -440,7 +426,8 @@ public class MapLoader extends JPanel implements Runnable {
     }
 
     private void setPlayerToStandingFrame() {
-        if (playerDownFrames[0] == null && playerUpFrames[0] == null && playerLeftFrames[0] == null && playerRightFrames[0] == null) return;
+        if (playerDownFrames[0] == null && playerUpFrames[0] == null && playerLeftFrames[0] == null && playerRightFrames[0] == null)
+            return;
         animationFrameIndex = 0;
         updateCurrentPlayerSprite();
     }
@@ -467,7 +454,7 @@ public class MapLoader extends JPanel implements Runnable {
                 g.fillRect(0, 0, displayPlayerWidth, displayPlayerHeight);
                 g.dispose();
             } else {
-                currentPlayerSprite = new BufferedImage(1,1, BufferedImage.TYPE_INT_ARGB);
+                currentPlayerSprite = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
             }
         }
     }
@@ -525,10 +512,22 @@ public class MapLoader extends JPanel implements Runnable {
             if (isDialogActive) return;
 
             switch (key) {
-                case KeyEvent.VK_W: case KeyEvent.VK_UP: upPressed = true; break;
-                case KeyEvent.VK_S: case KeyEvent.VK_DOWN: downPressed = true; break;
-                case KeyEvent.VK_A: case KeyEvent.VK_LEFT: leftPressed = true; break;
-                case KeyEvent.VK_D: case KeyEvent.VK_RIGHT: rightPressed = true; break;
+                case KeyEvent.VK_W:
+                case KeyEvent.VK_UP:
+                    upPressed = true;
+                    break;
+                case KeyEvent.VK_S:
+                case KeyEvent.VK_DOWN:
+                    downPressed = true;
+                    break;
+                case KeyEvent.VK_A:
+                case KeyEvent.VK_LEFT:
+                    leftPressed = true;
+                    break;
+                case KeyEvent.VK_D:
+                case KeyEvent.VK_RIGHT:
+                    rightPressed = true;
+                    break;
             }
         }
 
@@ -536,10 +535,22 @@ public class MapLoader extends JPanel implements Runnable {
         public void keyReleased(KeyEvent e) {
             int key = e.getKeyCode();
             switch (key) {
-                case KeyEvent.VK_W: case KeyEvent.VK_UP: upPressed = false; break;
-                case KeyEvent.VK_S: case KeyEvent.VK_DOWN: downPressed = false; break;
-                case KeyEvent.VK_A: case KeyEvent.VK_LEFT: leftPressed = false; break;
-                case KeyEvent.VK_D: case KeyEvent.VK_RIGHT: rightPressed = false; break;
+                case KeyEvent.VK_W:
+                case KeyEvent.VK_UP:
+                    upPressed = false;
+                    break;
+                case KeyEvent.VK_S:
+                case KeyEvent.VK_DOWN:
+                    downPressed = false;
+                    break;
+                case KeyEvent.VK_A:
+                case KeyEvent.VK_LEFT:
+                    leftPressed = false;
+                    break;
+                case KeyEvent.VK_D:
+                case KeyEvent.VK_RIGHT:
+                    rightPressed = false;
+                    break;
             }
         }
     }
