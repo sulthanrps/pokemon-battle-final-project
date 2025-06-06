@@ -148,7 +148,6 @@ public class PokemonSelectionUI extends JPanel {
                 System.out.println("Pokémon yang dipilih: " + p.getName());
                 selectedPokemon = p;
 //                JOptionPane.showMessageDialog(frame, "Kamu memilih: " + p.getName(), "Pokémon Terpilih", JOptionPane.INFORMATION_MESSAGE);
-
             }
 
             @Override

@@ -54,7 +54,7 @@
             }
         ],
         "name": "Charizard",
-        "health": 100,
+        "health": 85,
         "type": "Fire"
     },
     {
@@ -83,7 +83,7 @@
             }
         ],
         "name": "Arceus",
-        "health": 89,
+        "health": 100,
         "type": "Normal"
     }
 ]

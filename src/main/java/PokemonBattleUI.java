@@ -427,6 +427,8 @@ public class PokemonBattleUI extends JPanel {
                 }
             }
             JOptionPane.showMessageDialog(this, message1, "Permainan Selesai", JOptionPane.INFORMATION_MESSAGE);
+
+
             GetPokemon.updatePokemon(pokemonPlayer);
             MapLoader mapLoader = new MapLoader(gameWindow);
             gameWindow.switchPanel(mapLoader);

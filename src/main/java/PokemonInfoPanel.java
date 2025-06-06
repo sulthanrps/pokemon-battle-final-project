@@ -126,6 +126,7 @@ public class PokemonInfoPanel extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 if(pokemon.getHealth() > 0){
                     selectedPokemon = pokemon;
+                    JOptionPane.showMessageDialog(PokemonInfoPanel.this, "Kamu memilih: " + selectedPokemon.getName(), "Pokémon Terpilih", JOptionPane.INFORMATION_MESSAGE);
                 }
 
                 else {

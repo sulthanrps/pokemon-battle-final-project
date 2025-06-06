@@ -11,7 +11,7 @@ public class GameWindow extends JFrame {
 
     private Clip backgroundMusicClip;
 
-    private static final String BACKGROUND_MUSIC_PATH = "/Assets/music/music-pokemon.wav";
+    private static final String BACKGROUND_MUSIC_PATH = "/Assets/music/background_music.wav";
 
     public GameWindow() {
         super(GAME_TITLE);
