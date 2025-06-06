@@ -25,7 +25,7 @@
             }
         ],
         "name": "Pikachu",
-        "health": 0,
+        "health": 100,
         "type": "Electric"
     },
     {
@@ -83,7 +83,7 @@
             }
         ],
         "name": "Arceus",
-        "health": 147,
+        "health": 89,
         "type": "Normal"
     }
 ]
